@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/dig/!svn/ver/18/trunk/verify_entcat/modules
+END
+check_result.mako.py
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/dig/!svn/ver/6/trunk/verify_entcat/modules/check_result.mako.py
+END
+test.mako.py
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/dig/!svn/ver/17/trunk/verify_entcat/modules/test.mako.py
+END
