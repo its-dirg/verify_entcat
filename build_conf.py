@@ -27,20 +27,19 @@ else:
 #CONFIG["entity_category"] = [RESEARCH_AND_EDUCATION, EU]
 
 COMBOS = {
-    "xx": [("saml2.entity_category.edugain", "COC")],
-    # "nren": [("saml2.entity_category.swamid", "NREN")],
-    # "re": [("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION")],
-    # "re_eu": [("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
-    #           ("saml2.entity_category.swamid", "EU")],
-    # "re_hei": [("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
-    #            ("saml2.entity_category.swamid", "HEI")],
-    # "re_nren": [("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
-    #             ("saml2.entity_category.swamid", "NREN")],
-    # "re_nren_sfs": [
-    #     ("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
-    #     ("saml2.entity_category.swamid", "NREN"),
-    #     ("saml2.entity_category.swamid", "SFS")],
-    # "sfs": [("saml2.entity_category.swamid", "SFS")],
+    "coc": [("saml2.entity_category.edugain", "COC")],
+    "nren": [("saml2.entity_category.swamid", "NREN")],
+    "re_eu": [("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
+              ("saml2.entity_category.swamid", "EU")],
+    "re_hei": [("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
+               ("saml2.entity_category.swamid", "HEI")],
+    "re_nren": [("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
+                ("saml2.entity_category.swamid", "NREN")],
+    "re_nren_sfs": [
+        ("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
+        ("saml2.entity_category.swamid", "NREN"),
+        ("saml2.entity_category.swamid", "SFS")],
+    "sfs": [("saml2.entity_category.swamid", "SFS")],
 }
 
 pp = pprint.PrettyPrinter(indent=2)
