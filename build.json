@@ -1,0 +1,15 @@
+{
+    "coc": [["saml2.entity_category.edugain", "COC"]],
+    "nren": [["saml2.entity_category.swamid", "NREN"]],
+    "re_eu": [["saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"],
+              ["saml2.entity_category.swamid", "EU"]],
+    "re_hei": [["saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"],
+               ["saml2.entity_category.swamid", "HEI"]],
+    "re_nren": [["saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"],
+                ["saml2.entity_category.swamid", "NREN"]],
+    "re_nren_sfs": [
+        ["saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"],
+        ["saml2.entity_category.swamid", "NREN"],
+        ["saml2.entity_category.swamid", "SFS_1993_1153"]],
+    "sfs": [["saml2.entity_category.swamid", "SFS_1993_1153"]]
+}

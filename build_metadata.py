@@ -1,15 +1,23 @@
 #!/usr/bin/env python
+import json
 
 from subprocess import Popen, PIPE
-MAKE_METADATA = "/usr/bin/make_metadata.py"
-XMLSEC = "/usr/bin/xmlsec1"
+
+#MAKE_METADATA = "/usr/bin/make_metadata.py"
+MAKE_METADATA = "/Library/Frameworks/Python.framework/Versions/2.7/bin/make_metadata.py"
+
+#XMLSEC = "/usr/bin/xmlsec1"
+XMLSEC = "/opt/local/bin/xmlsec1"
 
 MDNS = '"urn:oasis:names:tc:SAML:2.0:metadata"'
 
 NFORMAT = "xenosmilus.umdc.umu.se-8086%ssp.xml"
 
-for cnf in ["", "coc", "nren", "re", "re_eu", "re_hei", "re_nren", "re_sfs_hei",
-            "sfs"]:
+CNFS = [""]
+COMBOS = json.loads(open("build.json").read())
+CNFS.extend(COMBOS.keys())
+
+for cnf in CNFS:
 
     if cnf:
         name = "conf_%s.py" % cnf

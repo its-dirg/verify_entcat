@@ -1,7 +1,7 @@
 #!/usr/bin/env python
+import json
 
 import pprint
-from urlparse import urlparse
 
 __author__ = 'rolandh'
 
@@ -26,21 +26,7 @@ else:
 #CONFIG["entityid"] = "%s/%s/sp.xml" % (BASE, "re_eu")
 #CONFIG["entity_category"] = [RESEARCH_AND_EDUCATION, EU]
 
-COMBOS = {
-    "coc": [("saml2.entity_category.edugain", "COC")],
-    "nren": [("saml2.entity_category.swamid", "NREN")],
-    "re_eu": [("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
-              ("saml2.entity_category.swamid", "EU")],
-    "re_hei": [("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
-               ("saml2.entity_category.swamid", "HEI")],
-    "re_nren": [("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
-                ("saml2.entity_category.swamid", "NREN")],
-    "re_nren_sfs": [
-        ("saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"),
-        ("saml2.entity_category.swamid", "NREN"),
-        ("saml2.entity_category.swamid", "SFS")],
-    "sfs": [("saml2.entity_category.swamid", "SFS")],
-}
+COMBOS = json.loads(open("build.json").read())
 
 pp = pprint.PrettyPrinter(indent=2)
 
@@ -66,6 +52,7 @@ for key, spec in COMBOS.items():
         _acs.append((url, v[1]))
     CONFIG["service"]["sp"]["endpoints"]["assertion_consumer_service"] = _acs
     _str = "CONFIG = %s" % pp.pformat(CONFIG)
+    _str = _str.replace("u'", "'")
     for mod, ec in spec:
         _str = _str.replace("'%s'" % ec, ec)
     text.append(_str)

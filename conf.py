@@ -35,9 +35,9 @@ CONFIG = {
     },
     "key_file": "pki/mykey.pem",
     "cert_file": "pki/mycert.pem",
-    "attribute_map_dir": "./pysaml2/example/attributemaps/",
+    "attribute_map_dir": "../pysaml2/src/saml2/attributemaps",
     "xmlsec_binary": xmlsec_path,
-    "metadata": {"local": ["./metadata.xml"]},
+    "metadata": {"mdfile": ["./swamid2.md"]},
     "name_form": NAME_FORMAT_URI,
     #"entity_category": ["http://www.swamid.se/category/research-and-education"]
 }
