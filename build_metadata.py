@@ -2,15 +2,17 @@
 import json
 
 from subprocess import Popen, PIPE
+from saml2.sigver import get_xmlsec_binary
 
+#
+MAKE_METADATA = "make_metadata.py"
+# or if you have problem with your paths be more specific
 #MAKE_METADATA = "/usr/bin/make_metadata.py"
-MAKE_METADATA = "/Library/Frameworks/Python.framework/Versions/2.7/bin/make_metadata.py"
+#MAKE_METADATA = "/Library/Frameworks/Python.framework/Versions/2.7/bin/make_metadata.py"
 
-#XMLSEC = "/usr/bin/xmlsec1"
-XMLSEC = "/opt/local/bin/xmlsec1"
+XMLSEC = get_xmlsec_binary(["/opt/local/bin", "/usr/local/bin"])
 
 MDNS = '"urn:oasis:names:tc:SAML:2.0:metadata"'
-
 NFORMAT = "xenosmilus.umdc.umu.se-8086%ssp.xml"
 
 CNFS = [""]

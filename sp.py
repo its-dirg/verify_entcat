@@ -3,8 +3,6 @@ import json
 import logging
 import re
 import argparse
-import os
-import os.path
 import server_conf
 
 from Cookie import SimpleCookie
@@ -49,8 +47,9 @@ logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
 
 
-EC_SEQUENCE = ["", "coc", "nren", "re", "sfs", "re_eu", "re_hei", "re_nren",
-               "re_sfs_hei"]
+COMBOS = json.loads(open("build.json").read())
+EC_SEQUENCE = [""]
+EC_SEQUENCE.extend(COMBOS.keys())
 
 NREN_DESC = "<b>National research and education network</b>(NREN)<br>"\
             "The application is provided by the Swedish NREN (SUNET) which is ultimately responsible "\
@@ -821,7 +820,8 @@ if __name__ == '__main__':
     SRV = wsgiserver.CherryPyWSGIServer(('0.0.0.0', PORT), application)
 
     if server_conf.HTTPS:
-        SRV.ssl_adapter = ssl_pyopenssl.pyOpenSSLAdapter(SERVER_CERT, SERVER_KEY,CERT_CHAIN)
+        SRV.ssl_adapter = ssl_pyopenssl.pyOpenSSLAdapter(SERVER_CERT,
+                                                         SERVER_KEY, CERT_CHAIN)
     logger.info("Server starting")
     print "SP listening on port: %s" % PORT
     try:
