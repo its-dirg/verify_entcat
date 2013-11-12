@@ -56,14 +56,15 @@
         var testRunning = -1;
         var tests = new Array();
         var testIsRunning = false;
-        var ec_seq = ${ec_seq}
+
+        var ec_seq = ${ec_seq};
         var sortOrder=sortByNameValue;
 
         function toggleArrow(id,pic1,pic2) {
             if ($('#'+id).attr('src') == pic1) {
-                $('#'+id).attr('src',pic2)
+                $('#'+id).attr('src',pic2);
             } else {
-                $('#'+id).attr('src',pic1)
+                $('#'+id).attr('src',pic1);
             }
         }
 
@@ -280,8 +281,6 @@
             sortByName();
             sortList();
         });
-
-
 
     </script>
 </head>
