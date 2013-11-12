@@ -751,9 +751,13 @@ def application(environ, start_response):
                             template_lookup=LOOKUP,
                             headers=[])
 
+            str_ec_seq = []
+            for ec in EC_SEQUENCE:
+                str_ec_seq.append(str(ec))
+
             argv = {
                 #"ec_seq_json": json.dumps(EC_SEQUENCE),
-                "ec_seq": EC_SEQUENCE,
+                "ec_seq": str_ec_seq,
                 "ec_info" : EC_INFORMATION
             }
             return resp(environ, start_response, **argv)
