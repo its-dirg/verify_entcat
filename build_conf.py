@@ -38,7 +38,7 @@ for key, spec in COMBOS.items():
         ecs.append(ec)
     text.extend([SETUP, "BASE = \"%s\"" % BASE, ""])
 
-    CONFIG["entityid"] = "%%s/%%s/sp.xml %% (BASE, \"%s\")" % key
+    CONFIG["entityid"] = "%s/%s/sp.xml" % (BASE, "%s") % key
     CONFIG["entity_category"] = ecs
     _acs = []
     for v in CONFIG["service"]["sp"]["endpoints"]["assertion_consumer_service"]:
