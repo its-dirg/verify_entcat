@@ -746,7 +746,7 @@ def application(environ, start_response):
                     return spec(environ, start_response, SP[''])
         if re.match(".*static/.*", path):
             return handleStatic(environ, start_response, path)
-        if re.match(".*test", path):
+        if re.match(".*test", path) or path == "/" or path == "":
             resp = Response(mako_template="test.mako",
                             template_lookup=LOOKUP,
                             headers=[])
