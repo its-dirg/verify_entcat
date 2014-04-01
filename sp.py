@@ -2,8 +2,10 @@
 import json
 import logging
 import re
+from uuid import uuid4
 import argparse
 import server_conf
+from saml2.s_utils import exception_trace
 
 from Cookie import SimpleCookie
 from mako.lookup import TemplateLookup
@@ -36,6 +38,10 @@ from saml2.s_utils import UnsupportedBinding
 from saml2.s_utils import sid
 from saml2.s_utils import rndstr
 #from srtest import exception_trace
+
+
+class ServiceErrorException(Exception):
+    pass
 
 logger = logging.getLogger("")
 hdlr = logging.FileHandler('spx.log')
@@ -392,18 +398,14 @@ class ACS(Service):
                 response, binding, self.outstanding_queries)
         except UnknownPrincipal, excp:
             logger.error("UnknownPrincipal: %s" % (excp,))
-            resp = ServiceError("UnknownPrincipal: %s" % (excp,))
-            return resp(self.environ, self.start_response)
+            raise excp
         except UnsupportedBinding, excp:
             logger.error("UnsupportedBinding: %s" % (excp,))
-            resp = ServiceError("UnsupportedBinding: %s" % (excp,))
-            return resp(self.environ, self.start_response)
+            raise excp
         except VerificationError, err:
-            resp = ServiceError("Verification error: %s" % (err,))
-            return resp(self.environ, self.start_response)
+            raise err
         except Exception, err:
-            resp = ServiceError("Other error: %s" % (err,))
-            return resp(self.environ, self.start_response)
+            raise err
 
         #logger.info("parsed OK")
         _resp = self.response.response
@@ -479,7 +481,7 @@ class SSO(object):
                     resp = SeeOther(str(value))
                     break
             else:
-                resp = ServiceError("Parameter error")
+                raise ServiceErrorException("Parameter error")
         else:
             resp = Response(http_args["data"], headers=http_args["headers"])
 
@@ -518,13 +520,13 @@ class SSO(object):
                         self.environ["REMOTE_ADDR"])
 
                     if not _entityid:
-                        return -1, ServiceError("No IdP to talk to")
+                        raise ServiceErrorException("No IdP to talk to")
                     logger.debug("IdP to talk to: %s" % _entityid)
                     return ecp.ecp_auth_request(_cli, _entityid, _rstate)
                 else:
-                    return -1, ServiceError('Faulty Accept header')
+                    raise ServiceErrorException('Faulty Accept header')
             else:
-                return -1, ServiceError('unknown ECP version')
+                raise ServiceErrorException('unknown ECP version')
 
         # Find all IdPs
         idps = self.sp.metadata.with_descriptor("idpsso")
@@ -583,7 +585,7 @@ class SSO(object):
                 # idps is a dictionary
                 idp_entity_id = idps.keys()[0]
             elif not len(idps):
-                return -1, ServiceError('Misconfiguration')
+                raise ServiceErrorException('Misconfiguration')
             else:
                 return -1, NotImplemented("No WAYF or DS present!")
 
@@ -597,18 +599,18 @@ class SSO(object):
                 entity_id=entity_id)
             logger.debug("binding: %s, destination: %s" % (_binding,
                                                            destination))
-            req = _cli.create_authn_request(destination, vorg=vorg_name)
+            req_id, req = _cli.create_authn_request(destination, vorg=vorg_name)
             _rstate = rndstr()
             self.cache.relay_state[_rstate] = came_from
             ht_args = _cli.apply_binding(_binding, "%s" % req, destination,
                                          relay_state=_rstate)
-            _sid = req.id
+            _sid = req_id
             logger.debug("ht_args: %s" % ht_args)
         except Exception, exc:
             logger.exception(exc)
-            resp = ServiceError(
-                "Failed to construct the AuthnRequest: %s" % exc)
-            return resp(self.environ, self.start_response)
+            raise exc
+
+            #return resp(self.environ, self.start_response)
 
         # remember the request
         self.cache.outstanding_queries[_sid] = came_from
@@ -762,16 +764,30 @@ def application(environ, start_response):
             }
             return resp(environ, start_response, **argv)
         return not_found(environ, start_response)
-    except StatusError, err:
-        logging.error("StatusError: %s" % err)
-        resp = BadRequest("%s" % err)
+    #except StatusError, err:
+    #    logging.error("StatusError: %s" % err)
+    #    resp = BadRequest("%s" % err)
+    #    return resp(environ, start_response)
+    except UnknownPrincipal, excp:
+        urn = uuid4().urn
+        logger.error("uuid: " + str(urn) + str(exception_trace(excp)))
+        argv = {
+            "log_id": str(urn),
+        }
+        mte = LOOKUP.get_template("unknown_principal.mako")
+        resp = BadRequest(mte.render(**argv))
         return resp(environ, start_response)
-    except Exception, err:
-        #_err = exception_trace("RUN", err)
-        #logging.error(exception_trace("RUN", _err))
-        print >> sys.stderr, err
-        resp = ServiceError("%s" % err)
+
+    except Exception, excp:
+        urn = uuid4().urn
+        logger.error("uuid: " + str(urn) + str(exception_trace(excp)))
+        argv = {
+            "log_id": str(urn),
+        }
+        mte = LOOKUP.get_template("bad_request.mako")
+        resp = BadRequest(mte.render(**argv))
         return resp(environ, start_response)
+
 
 # ----------------------------------------------------------------------------
 
