@@ -16,7 +16,6 @@ from saml2 import time_util
 from saml2 import ecp
 from saml2 import BINDING_HTTP_ARTIFACT
 from saml2 import BINDING_HTTP_POST
-from saml2.assertion import Policy
 from saml2.client import Saml2Client
 from saml2.ecp_client import PAOS_HEADER_INFO
 from saml2.httputil import geturl, make_cookie, parse_cookie
@@ -35,7 +34,6 @@ from saml2.s_utils import UnknownPrincipal
 from saml2.s_utils import UnsupportedBinding
 from saml2.s_utils import sid
 from saml2.s_utils import rndstr
-#from srtest import exception_trace
 
 logger = logging.getLogger("")
 hdlr = logging.FileHandler('spx.log')
@@ -45,7 +43,6 @@ base_formatter = logging.Formatter(
 hdlr.setFormatter(base_formatter)
 logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
-
 
 COMBOS = json.loads(open("build.json").read())
 EC_SEQUENCE = [""]
@@ -93,7 +90,7 @@ SFS_DESC = (
     "<br /><br />This category should return the attributes:"
     "<ul><li>eduPersonTargetedID</li><li>norEduPersonNIN</li></ul>")
 
-EU_DESC =(
+EU_DESC = (
     "<b>EU Adequate Protection</b>(EU)<br />"
     "The application is compliant with any of the EU adequate protection for "
     "3rd countries according to EU Commission decisions on the adequacy of the "
@@ -101,7 +98,6 @@ EU_DESC =(
     "for instance applications that declares compliance with US safe-harbor."
     "<br /><br />This category should return the attributes:"
     "<ul><li>eduPersonTargetedID</li></ul>")
-
 
 HEI_DESC = (
     "<b>HEI Service</b>(HEI)<br />"
@@ -134,7 +130,8 @@ COC_DESC = (
     "<li>sn</li><li>displayName</li><li>schachomeorganization</li></ul>")
 
 #Descriptions exists here:
-# https://portal.nordu.net/display/SWAMID/Entity+Categories#EntityCategories-SFS1993%3A1153
+# https://portal.nordu.net/display/SWAMID/Entity+Categories#EntityCategories
+# -SFS1993%3A1153
 
 EC_INFORMATION = {
     "": {"Name": "Base category",
@@ -148,13 +145,19 @@ EC_INFORMATION = {
     "sfs": {"Name": "SFS", "Description": SFS_DESC},
     "r_and_s": {"Name": "RS", "Description": RS_DESC},
     "re_eu": {"Name": "RE & EU",
-        "Description": RE_DESC + "<br /><br />" + EU_DESC},
+              "Description": RE_DESC + "<br /><br />" + EU_DESC},
     "re_hei": {"Name": "RE & HEI",
                "Description": RE_DESC + "<br /><br />" + HEI_DESC},
     "re_nren": {"Name": "RE & NREN",
                 "Description": RE_DESC + "<br /><br />" + NREN_DESC},
-    "re_sfs_hei": {"Name": "RE & SFS & HEI",
-                   "Description": RE_DESC + "<br /><br />" + SFS_DESC + "<br /><br />" + HEI_DESC},
+    "re_nren_sfs": {
+        "Name": "RE & NREN & SFS",
+        "Description": RE_DESC + "<br /><br />" + NREN_DESC +
+                       "<br /><br />" + SFS_DESC},
+    "re_sfs_hei": {
+        "Name": "RE & SFS & HEI",
+        "Description": RE_DESC + "<br /><br />" + SFS_DESC + "<br /><br />" +
+                       HEI_DESC},
 }
 
 SP = {}
@@ -286,7 +289,7 @@ class Service(object):
         self.start_response = start_response
         self.user = user
         self.sp = None
-        
+
     def unpack_redirect(self):
         if "QUERY_STRING" in self.environ:
             _qs = self.environ["QUERY_STRING"]
@@ -460,6 +463,7 @@ class ACS(Service):
         logger.info("SP: %s" % self.sp.config.entityid)
         rest = POLICY.get_entity_categories_restriction(
             self.sp.config.entityid, self.sp.metadata)
+        logger.info("policy: %s" % rest)
 
         akeys = [k.lower() for k in ava.keys()]
 
@@ -475,6 +479,7 @@ class ACS(Service):
                 res["more"].append(key)
 
         return res
+
 
 # -----------------------------------------------------------------------------
 # REQUESTERS
@@ -737,6 +742,7 @@ def add_urls():
         urls.append(("%s/redirect$" % base, (ACS, "redirect", SP[ec])))
         urls.append(("%s/redirect/(.*)$" % base, (ACS, "redirect", SP[ec])))
 
+
 # ----------------------------------------------------------------------------
 
 
@@ -753,7 +759,7 @@ def application(environ, start_response):
     :return: The response as a list of lines
     """
     path = environ.get('PATH_INFO', '').lstrip('/')
-    logger.debug("<application> PATH: '%s'" % path)
+    logger.info("<application> PATH: '%s'" % path)
 
     logger.debug("Finding callback to run")
     try:
@@ -786,7 +792,7 @@ def application(environ, start_response):
             argv = {
                 #"ec_seq_json": json.dumps(EC_SEQUENCE),
                 "ec_seq": str_ec_seq,
-                "ec_info" : EC_INFORMATION
+                "ec_info": EC_INFORMATION
             }
             return resp(environ, start_response, **argv)
         return not_found(environ, start_response)
