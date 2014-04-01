@@ -11,5 +11,6 @@
         ["saml2.entity_category.swamid", "RESEARCH_AND_EDUCATION"],
         ["saml2.entity_category.swamid", "NREN"],
         ["saml2.entity_category.swamid", "SFS_1993_1153"]],
-    "sfs": [["saml2.entity_category.swamid", "SFS_1993_1153"]]
+    "sfs": [["saml2.entity_category.swamid", "SFS_1993_1153"]],
+    "r_and_s":[["saml2.entity_category.refeds", "RESEARCH_AND_SCHOLARSHIP"]]
 }

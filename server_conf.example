@@ -6,7 +6,7 @@ HTTPS = False
 # Which groups of entity categories that are under scrutiny
 POLICY = Policy(
     {
-        "default": {"entity_categories": ["swamid", "edugain"]}
+        "default": {"entity_categories": ["swamid", "edugain", "refeds"]}
     }
 )
 

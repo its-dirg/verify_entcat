@@ -18,7 +18,6 @@ from saml2 import time_util
 from saml2 import ecp
 from saml2 import BINDING_HTTP_ARTIFACT
 from saml2 import BINDING_HTTP_POST
-from saml2.assertion import Policy
 from saml2.client import Saml2Client
 from saml2.ecp_client import PAOS_HEADER_INFO
 from saml2.httputil import geturl, make_cookie, parse_cookie
@@ -37,7 +36,6 @@ from saml2.s_utils import UnknownPrincipal
 from saml2.s_utils import UnsupportedBinding
 from saml2.s_utils import sid
 from saml2.s_utils import rndstr
-#from srtest import exception_trace
 
 
 class ServiceErrorException(Exception):
@@ -52,87 +50,120 @@ hdlr.setFormatter(base_formatter)
 logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
 
-
 COMBOS = json.loads(open("build.json").read())
 EC_SEQUENCE = [""]
 EC_SEQUENCE.extend(COMBOS.keys())
 
-NREN_DESC = "<b>National research and education network</b>(NREN)<br>"\
-            "The application is provided by the Swedish NREN (SUNET) which is ultimately responsible "\
-            "for its operation."\
-            "This category is only relevant for attribute-release between SWAMID "\
-            "registered IdPs and SUNET services.<br /><br />This category should return the attribute:"\
-            "<ul><li>eduPersonTargetedID</li></ul>"
+NREN_DESC = (
+    "<b>National research and education network</b>(NREN)<br>"
+    "The application is provided by the Swedish NREN (SUNET) which is "
+    "ultimately responsible for its operation."
+    "This category is only relevant for attribute-release between SWAMID "
+    "registered IdPs and SUNET services.<br /><br />This category "
+    "should return the attribute: <ul><li>eduPersonTargetedID</li></ul>")
 
-RE_DESC = "<b>Research & Education</b>(RE)<br />"\
-          "The Research & Education category applies to low-risk services that support research and "\
-          "education as an essential component. For instance, a service that provides tools for both "\
-          "multi-institutional research collaboration and instruction is eligible as a candidate for "\
-          "this category. This category is very similar to InCommons Research & Scolarship Category. "\
-          "The recommended IdP behavior is to release name, eppn, eptid, mail and "\
-          "eduPersonScopedAffiliation which also aligns with the InCommon recommendation only if the "\
-          "services is also in at least one of the safe data processing categories. It is also a "\
-          "recommendation that static organisational information is released."\
-          "<br /><br />This category should return the attributes:"\
-          "<ul><li>eduPersonTargetedID</li><li>givenName</li><li>initials</li><li>displayName</li>"\
-          "<li>c</li><li>o</li><li>ou</li><li>eduPersonPrincipalName</li>"\
-          "<li>sn</li><li>eduPersonScopedAffiliation</li><li>email</li></ul>"
+RE_DESC = (
+    "<b>Research & Education</b>(RE)<br />"
+    "The Research & Education category applies to low-risk services that "
+    "support research and education as an essential component. For instance, a "
+    "service that provides tools for both multi-institutional research "
+    "collaboration and instruction is eligible as a candidate for this "
+    "category. This category is very similar to InCommons Research & "
+    "Scolarship Category. The recommended IdP behavior is to release name, "
+    "eppn, eptid, mail and eduPersonScopedAffiliation which also aligns with "
+    "the InCommon recommendation only if the services is also in at least one "
+    "of the safe data processing categories. It is also a recommendation that "
+    "static organisational information is released."
+    "<br /><br />This category should return the attributes:"
+    "<ul><li>eduPersonTargetedID</li><li>givenName</li><li>initials</li>"
+    "<li>displayName</li><li>c</li><li>o</li><li>ou</li>"
+    "<li>eduPersonPrincipalName</li><li>sn</li>"
+    "<li>eduPersonScopedAffiliation</li><li>email</li></ul>")
 
-SFS_DESC = "<b>Svensk f&ouml;rfattningssamling 1993:1153</b>(SFS)<br />"\
-           "The SFS 1993:1153 category applies to services that fulfill "\
-           "<a href='http://www.riksdagen.se/sv/Dokument-Lagar/Lagar/Svenskforfattningssamling/"\
-           "Forordning-19931153-om-redo_sfs-1993-1153' target='_blank'>SFS 1993:1153</a>. "\
-           "SFS 1993:1153 limits membership in this category to services provided by Swedish "\
-           "HEI-institutions, VHS.se or SCB.se. Example services include common government-operated "\
-           "student- and admissions administration services such as LADOK and NyA aswell as enrollment "\
-           "and course registration services. Inclusion in this category is strictly reserved for "\
-           "applications that are governed by SFS 1993:1153 which implies that the application may "\
-           "make use of norEduPersonNIN. The recommended IdP behavior is to release norEduPersonNIN."\
-           "<br /><br />This category should return the attributes:"\
-          "<ul><li>eduPersonTargetedID</li><li>norEduPersonNIN</li></ul>"
+SFS_DESC = (
+    "<b>Svensk f&ouml;rfattningssamling 1993:1153</b>(SFS)<br />"
+    "The SFS 1993:1153 category applies to services that fulfill "
+    "<a href='http://www.riksdagen.se/sv/Dokument-Lagar/Lagar/"
+    "Svenskforfattningssamling/Forordning-19931153-om-redo_sfs-1993-1153' "
+    "target='_blank'>SFS 1993:1153</a>. SFS 1993:1153 limits membership in "
+    "this category to services provided by Swedish HEI-institutions, VHS.se or "
+    "SCB.se. Example services include common government-operated student- and "
+    "admissions administration services such as LADOK and NyA aswell as "
+    "enrollment and course registration services. Inclusion in this category "
+    "is strictly reserved for applications that are governed by SFS 1993:1153 "
+    "which implies that the application may make use of norEduPersonNIN. The "
+    "recommended IdP behavior is to release norEduPersonNIN."
+    "<br /><br />This category should return the attributes:"
+    "<ul><li>eduPersonTargetedID</li><li>norEduPersonNIN</li></ul>")
 
-EU_DESC = "<b>EU Adequate Protection</b>(EU)<br />" \
-          "The application is compliant with any of the EU adequate protection for 3rd countries according to " \
-          "EU Commission decisions on the adequacy of the protection of personal data in third countries." \
-          "This category includes for instance applications that declares compliance with US safe-harbor." \
-           "<br /><br />This category should return the attributes:" \
-          "<ul><li>eduPersonTargetedID</li></ul>"
+EU_DESC = (
+    "<b>EU Adequate Protection</b>(EU)<br />"
+    "The application is compliant with any of the EU adequate protection for "
+    "3rd countries according to EU Commission decisions on the adequacy of the "
+    "protection of personal data in third countries. This category includes "
+    "for instance applications that declares compliance with US safe-harbor."
+    "<br /><br />This category should return the attributes:"
+    "<ul><li>eduPersonTargetedID</li></ul>")
 
+HEI_DESC = (
+    "<b>HEI Service</b>(HEI)<br />"
+    "The application is provided by a Swedish HEI which is ultimately "
+    "responsible for its operation."
+    "<br /><br />This category should return the attributes:"
+    "<ul><li>eduPersonTargetedID</li></ul>")
 
-HEI_DESC = "<b>HEI Service</b>(HEI)<br />" \
-           "The application is provided by a Swedish HEI which is ultimately responsible for its operation." \
-           "<br /><br />This category should return the attributes:" \
-           "<ul><li>eduPersonTargetedID</li></ul>"
+RS_DESC = (
+    "<b>Research & Scholarship</b>(RS)<br />"
+    "Candidates for the Research and Scholarship (R&S) "
+    "Category are Service Providers that support research "
+    "and scholarship interaction, collaboration or management "
+    "as an essential component."
+    "<br /><br />This category should return the attributes:"
+    "<ul><li>eduPersonTargetedID</li><li>givenName</li>"
+    "<li>displayName</li><li>eduPersonPrincipalName</li>"
+    "<li>sn</li><li>eduPersonScopedAffiliation</li><li>email</li></ul>")
 
-#Descriptions exists here: https://portal.nordu.net/display/SWAMID/Entity+Categories#EntityCategories-SFS1993%3A1153
+COC_DESC = (
+    "<b>Code of Conduct</b>(CoC)<br />The GEANT Data protection Code of "
+    "Conduct (CoC) defines an approach on European level to "
+    "meet the requirements of the EU data protection directive for releasing "
+    "mostly harmless personal attributes to a Service Provider (SP) from an "
+    "Identity Provider (IdP). "
+    "For more information please see GEANT Data Protection Code of Conduct. "
+    "<br /><br />This category should return the attributes:"
+    "<ul><li>eduPersonTargetedID</li><li>eduPersonPrincipalName</li>"
+    "<li>eduPersonScopedAffiliation</li><li>email</li><li>givenName</li>"
+    "<li>sn</li><li>displayName</li><li>schachomeorganization</li></ul>")
+
+#Descriptions exists here:
+# https://portal.nordu.net/display/SWAMID/Entity+Categories#EntityCategories
+# -SFS1993%3A1153
+
 EC_INFORMATION = {
     "": {"Name": "Base category",
-         "Description": "<b>Base category</b><br />A basic category that only should return the attribute:"
-                        "<ul><li>eduPersonTargetedID</li></ul>"},
-    "coc": {"Name": "CoC",
-            "Description": "<b>Code of Conduct</b>(CoC)<br />The GEANT Data protection Code of Conduct (CoC) defines "
-                           "an approach on European level to "
-                           "meet the requirements of the EU data protection directive for releasing mostly harmless "
-                           "personal attributes to a Service Provider (SP) from an Identity Provider (IdP). "
-                           "For more information please see GEANT Data Protection Code of Conduct. "
-                           "<br /><br />This category should return the attributes:"
-                           "<ul><li>eduPersonTargetedID</li><li>eduPersonPrincipalName</li>"
-                           "<li>eduPersonScopedAffiliation</li><li>email</li><li>givenName</li>"
-                           "<li>sn</li><li>displayName</li><li>schachomeorganization</li></ul>"},
-    "nren": {"Name": "NREN",
-             "Description": NREN_DESC},
-    "re": {"Name": "RE",
-           "Description": RE_DESC},
-    "sfs": {"Name": "SFS",
-            "Description": SFS_DESC},
+         "Description": (
+             "<b>Base category</b><br />A basic category that only should "
+             "return the attribute:"
+             "<ul><li>eduPersonTargetedID</li></ul>")},
+    "coc": {"Name": "CoC", "Description": COC_DESC},
+    "nren": {"Name": "NREN", "Description": NREN_DESC},
+    "re": {"Name": "RE", "Description": RE_DESC},
+    "sfs": {"Name": "SFS", "Description": SFS_DESC},
+    "r_and_s": {"Name": "RS", "Description": RS_DESC},
     "re_eu": {"Name": "RE & EU",
               "Description": RE_DESC + "<br /><br />" + EU_DESC},
     "re_hei": {"Name": "RE & HEI",
                "Description": RE_DESC + "<br /><br />" + HEI_DESC},
     "re_nren": {"Name": "RE & NREN",
                 "Description": RE_DESC + "<br /><br />" + NREN_DESC},
-    "re_sfs_hei": {"Name": "RE & SFS & HEI",
-                   "Description": RE_DESC + "<br /><br />" + SFS_DESC + "<br /><br />" + HEI_DESC},
+    "re_nren_sfs": {
+        "Name": "RE & NREN & SFS",
+        "Description": RE_DESC + "<br /><br />" + NREN_DESC +
+                       "<br /><br />" + SFS_DESC},
+    "re_sfs_hei": {
+        "Name": "RE & SFS & HEI",
+        "Description": RE_DESC + "<br /><br />" + SFS_DESC + "<br /><br />" +
+                       HEI_DESC},
 }
 
 SP = {}
@@ -264,7 +295,7 @@ class Service(object):
         self.start_response = start_response
         self.user = user
         self.sp = None
-        
+
     def unpack_redirect(self):
         if "QUERY_STRING" in self.environ:
             _qs = self.environ["QUERY_STRING"]
@@ -434,6 +465,7 @@ class ACS(Service):
         logger.info("SP: %s" % self.sp.config.entityid)
         rest = POLICY.get_entity_categories_restriction(
             self.sp.config.entityid, self.sp.metadata)
+        logger.info("policy: %s" % rest)
 
         akeys = [k.lower() for k in ava.keys()]
 
@@ -449,6 +481,7 @@ class ACS(Service):
                 res["more"].append(key)
 
         return res
+
 
 # -----------------------------------------------------------------------------
 # REQUESTERS
@@ -711,6 +744,7 @@ def add_urls():
         urls.append(("%s/redirect$" % base, (ACS, "redirect", SP[ec])))
         urls.append(("%s/redirect/(.*)$" % base, (ACS, "redirect", SP[ec])))
 
+
 # ----------------------------------------------------------------------------
 
 
@@ -727,7 +761,7 @@ def application(environ, start_response):
     :return: The response as a list of lines
     """
     path = environ.get('PATH_INFO', '').lstrip('/')
-    logger.debug("<application> PATH: '%s'" % path)
+    logger.info("<application> PATH: '%s'" % path)
 
     logger.debug("Finding callback to run")
     try:
@@ -760,7 +794,7 @@ def application(environ, start_response):
             argv = {
                 #"ec_seq_json": json.dumps(EC_SEQUENCE),
                 "ec_seq": str_ec_seq,
-                "ec_info" : EC_INFORMATION
+                "ec_info": EC_INFORMATION
             }
             return resp(environ, start_response, **argv)
         return not_found(environ, start_response)
