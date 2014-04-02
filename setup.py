@@ -9,7 +9,7 @@ setup(
     name='verify_entcat',
     version='0.1',
     url='',
-    license='LICENSE.txt',
+    #license='LICENSE.txt',
     author='Roland Hedberg, Hans Hoerberg',
     author_email='roland.hedberg@umu.se, hans.horberg@umu.se',
     description='Op to Saml proxy based on the projects pyoidc and pysaml.',
