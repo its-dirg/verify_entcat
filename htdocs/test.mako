@@ -308,6 +308,9 @@
                 <div id="running_test"><img src="static/loader.gif" />&nbsp;&nbsp;Wait while testing.</div>
                 <span>This utility can test all IdP's contained in the metadata configured
                     for its service provider.</span><br />
+                <span>NOTE: To run this utility your IdP must be allowed to be viewed in IFrames! Do not use
+                    X-Frame-Options in the HTTP response header or add ALLOW-FROM for samltest.swamid.se in the
+                    X-Frame-Options.</span><br />
                 <span id="helpLinkShow" class="link" onclick="toggleDisplay('help_instructions');
                                                       toggleDisplay('helpLinkShow');
                                                       toggleDisplay('helpLinkHide')">
