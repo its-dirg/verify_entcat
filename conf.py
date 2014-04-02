@@ -14,7 +14,7 @@ if get_xmlsec_binary:
 else:
     xmlsec_path = '/usr/local/bin/xmlsec1'
 
-BASE = "https://xenosmilus2.umdc.umu.se:8086"
+BASE = "https://samltest.swamid.se"
 
 CONFIG = {
     "entityid": "%s/%ssp.xml" % (BASE, ""),
@@ -33,9 +33,9 @@ CONFIG = {
             }
         },
     },
-    "key_file": "pki/mykey.pem",
-    "cert_file": "pki/mycert.pem",
-    "attribute_map_dir": "../pysaml2/src/saml2/attributemaps",
+    "key_file": "pki/sp.key",
+    "cert_file": "pki/sp.crt",
+    #"attribute_map_dir": "../pysaml2/src/saml2/attributemaps",
     "xmlsec_binary": xmlsec_path,
     "metadata": {"mdfile": ["./swamid2.md"]},
     "name_form": NAME_FORMAT_URI,
