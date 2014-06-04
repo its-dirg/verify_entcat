@@ -44,6 +44,13 @@ hdlr.setFormatter(base_formatter)
 logger.addHandler(hdlr)
 logger.setLevel(logging.INFO)
 
+reslog = logging.getLogger("reslog")
+r_hdlr = logging.FileHandler('res.log')
+r_base_formatter = logging.Formatter("%(asctime)s %(message)s")
+r_hdlr.setFormatter(r_base_formatter)
+reslog.addHandler(r_hdlr)
+reslog.setLevel(logging.INFO)
+
 COMBOS = json.loads(open("build.json").read())
 EC_SEQUENCE = [""]
 EC_SEQUENCE.extend(COMBOS.keys())
@@ -115,7 +122,7 @@ RS_DESC = (
     "<br /><br />This category should return the attributes:"
     "<ul><li>eduPersonTargetedID</li><li>givenName</li>"
     "<li>displayName</li><li>eduPersonPrincipalName</li>"
-    "<li>sn</li><li>eduPersonScopedAffiliation</li><li>email</li></ul>")
+    "<li>sn</li><li>eduPersonScopedAffiliation</li><li>mail</li></ul>")
 
 COC_DESC = (
     "<b>Code of Conduct</b>(CoC)<br />The GEANT Data protection Code of "
@@ -432,6 +439,9 @@ class ACS(Service):
         except VerificationError, err:
             resp = ServiceError("Verification error: %s" % (err,))
             return resp(self.environ, self.start_response)
+        except StatusError, err:
+            resp = ServiceError("IdP Status error: %s" % (err,))
+            return resp(self.environ, self.start_response)
         except Exception, err:
             resp = ServiceError("Other error: %s" % (err,))
             return resp(self.environ, self.start_response)
@@ -443,7 +453,10 @@ class ACS(Service):
 
         _cmp = self.verify_attributes(self.response.ava)
 
-        logger.info(">RES> %s" % (_cmp,))
+        logger.info(">%s>%s> %s" % (_resp.issuer.text, self.sp.config.entityid,
+                                    _cmp))
+        reslog.info("#%s#%s#%s" % (_resp.issuer.text, self.sp.config.entityid,
+                                   _cmp))
         #_ec = ""
         # for _ec, _sp in SP.items():
         #     if _sp == self.sp:
