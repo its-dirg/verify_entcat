@@ -13,7 +13,7 @@ MAKE_METADATA = "make_metadata.py"
 XMLSEC = get_xmlsec_binary(["/opt/local/bin", "/usr/local/bin"])
 
 MDNS = '"urn:oasis:names:tc:SAML:2.0:metadata"'
-NFORMAT = "xenosmilus.umdc.umu.se-8086%ssp.xml"
+NFORMAT = "samltest.swamid.se%ssp.xml"
 
 CNFS = [""]
 COMBOS = json.loads(open("build.json").read())
