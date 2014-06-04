@@ -643,10 +643,10 @@ class SSO(object):
                 entity_id=entity_id)
             logger.debug("binding: %s, destination: %s" % (_binding,
                                                            destination))
-            req = _cli.create_authn_request(destination, vorg=vorg_name)
+            id, req = _cli.create_authn_request(destination, vorg=vorg_name)
             _rstate = rndstr()
             self.cache.relay_state[_rstate] = came_from
-            ht_args = _cli.apply_binding(_binding, "%s" % req, destination,
+            ht_args = _cli.apply_binding(_binding, "%s" % (req,), destination,
                                          relay_state=_rstate)
             _sid = req.id
             logger.debug("ht_args: %s" % ht_args)
