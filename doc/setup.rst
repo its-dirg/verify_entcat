@@ -27,7 +27,7 @@ Then start with the settings for verify_entcat.
 #) Rename the file server_conf.example to server_conf.py.
 #) PORT must match with the settings for BASE in conf.py.
 #) HTTPS should be True if you want to run the server as HTTPS, otherwise False.
-  If you use HTTPS you need to do 12-14
+    If you use HTTPS you need to do (12)-(14)
 #) POLICY contains the policies for the entity categories. View pysaml2 for more information.
 #) RT contains the path the certificate
 #) SERVER_KEY contains the path for the private key
