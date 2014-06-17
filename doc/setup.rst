@@ -31,13 +31,9 @@ Then start with the settings for verify_entcat.
 #) POLICY contains the policies for the entity categories. View pysaml2 for more information.
 #) RT contains the path the certificate
 #) SERVER_KEY contains the path for the private key
-#) CERT_CHAIN is the certificate chain that the HTTP server can use to
-  verify server certificates. If it's empty (=None) no server certificate
-  verification will be made.
+#) CERT_CHAIN is the certificate chain that the HTTP server can use to verify server certificates. If it's empty (=None) no server certificate verification will be made.
 
-#) Modify build.json so it reflects the combinations of entity categories
-  you want to test
+#) Modify build.json so it reflects the combinations of entity categories you want to test
 #) Build the SP configuration to cover all variants using build_conf.py
-#) Build the metadata for all the SPs using build_metadata.py, you may
-    want to change the name format.
+#) Build the metadata for all the SPs using build_metadata.py, you may want to change the name format.
 #) Export your SPs metadata to you federation and you're ready to go
