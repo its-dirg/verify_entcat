@@ -14,3 +14,5 @@ POLICY = Policy(
 SERVER_CERT = "pki/ssl.crt"
 SERVER_KEY = "pki/ssl.pem"
 CERT_CHAIN = ""
+
+DB_PATH = "./results.db"

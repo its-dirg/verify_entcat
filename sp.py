@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import json
 import logging
+import os
+import pickle
 import re
 import argparse
 import server_conf
@@ -8,6 +10,7 @@ import server_conf
 from Cookie import SimpleCookie
 from mako.lookup import TemplateLookup
 from urlparse import parse_qs
+from sqlite3 import dbapi2 as sqlite
 import sys
 
 from saml2 import BINDING_HTTP_REDIRECT
@@ -136,7 +139,7 @@ COC_DESC = (
     "<li>eduPersonScopedAffiliation</li><li>email</li><li>givenName</li>"
     "<li>sn</li><li>displayName</li><li>schachomeorganization</li></ul>")
 
-#Descriptions exists here:
+# Descriptions exists here:
 # https://portal.nordu.net/display/SWAMID/Entity+Categories#EntityCategories
 # -SFS1993%3A1153
 
@@ -165,7 +168,7 @@ EC_INFORMATION = {
         "Name": "RE & SFS & HEI",
         "Description": RE_DESC + "<br /><br />" + SFS_DESC + "<br /><br />" +
                        HEI_DESC},
-}
+    }
 
 SP = {}
 SEED = ""
@@ -215,7 +218,7 @@ class ECP_response(object):
     def __init__(self, content):
         self.content = content
 
-    #noinspection PyUnusedLocal
+    # noinspection PyUnusedLocal
     def __call__(self, environ, start_response):
         start_response('%s %s' % (self.code, self.title),
                        [('Content-Type', "text/xml")])
@@ -401,7 +404,7 @@ class Service(object):
 
 
 # -----------------------------------------------------------------------------
-#  Attribute Consuming service
+# Attribute Consuming service
 # -----------------------------------------------------------------------------
 
 
@@ -419,7 +422,7 @@ class ACS(Service):
         :param response: The SAML response, transport encoded
         :param binding: Which binding the query came in over
         """
-        #tmp_outstanding_queries = dict(self.outstanding_queries)
+        # tmp_outstanding_queries = dict(self.outstanding_queries)
         if not response:
             logger.info("Missing Response")
             resp = Unauthorized('Unknown user')
@@ -446,21 +449,23 @@ class ACS(Service):
             resp = ServiceError("Other error: %s" % (err,))
             return resp(self.environ, self.start_response)
 
-        #logger.info("parsed OK")
+        # logger.info("parsed OK")
         _resp = self.response.response
 
         logger.info("AVA: %s" % self.response.ava)
 
         _cmp = self.verify_attributes(self.response.ava)
+        # Log result to DB
+        DB_HANDLER.update_test_result(_resp.issuer.text, self.sp.config.entityid, _cmp)
 
         logger.info(">%s>%s> %s" % (_resp.issuer.text, self.sp.config.entityid,
                                     _cmp))
         reslog.info("#%s#%s#%s" % (_resp.issuer.text, self.sp.config.entityid,
                                    _cmp))
-        #_ec = ""
+        # _ec = ""
         # for _ec, _sp in SP.items():
-        #     if _sp == self.sp:
-        #         break
+        # if _sp == self.sp:
+        # break
         # if (re.match('.*/login',
         # tmp_outstanding_queries[_resp.in_response_to])):
 
@@ -678,8 +683,8 @@ class SSO(object):
         # If more than one idp and if none is selected, I have to do wayf
         (done, response) = self._pick_idp(came_from)
         # Three cases: -1 something went wrong or Discovery service used
-        #               0 I've got an IdP to send a request to
-        #               >0 ECP in progress
+        # 0 I've got an IdP to send a request to
+        # >0 ECP in progress
         logger.debug("_idp_pick returned: %s" % done)
         if done == -1:
             return response(self.environ, self.start_response)
@@ -696,7 +701,7 @@ class SSO(object):
 # ----------------------------------------------------------------------------
 
 
-#noinspection PyUnusedLocal
+# noinspection PyUnusedLocal
 def not_found(environ, start_response):
     """Called if no URL matches."""
     resp = NotFound('Not Found')
@@ -706,13 +711,13 @@ def not_found(environ, start_response):
 # ----------------------------------------------------------------------------
 
 
-#noinspection PyUnusedLocal
+# noinspection PyUnusedLocal
 def ecat(environ, start_response, _sp):
     _sso = SSO(_sp, environ, start_response, cache=CACHE, **ARGS)
     return _sso.do()
 
 
-#noinspection PyUnusedLocal
+# noinspection PyUnusedLocal
 def verifyLogincookie(environ, start_response, _sp):
     _sso = SSO(_sp, environ, start_response, cache=CACHE, **ARGS)
     return _sso.do()
@@ -754,6 +759,86 @@ def add_urls():
         urls.append(("%s/post/(.*)$" % base, (ACS, "post", SP[ec])))
         urls.append(("%s/redirect$" % base, (ACS, "redirect", SP[ec])))
         urls.append(("%s/redirect/(.*)$" % base, (ACS, "redirect", SP[ec])))
+
+
+# ----------------------------------------------------------------------------
+
+class ResultsDBHandler(object):
+    """Manager of the database containing all the latest test results for all IdP's.
+
+    The database contains one table with three columns: IdP, TestId and Result.
+    When recording a new test result for a specific test and IdP, any previous result is overwritten.
+    """
+
+    def __init__(self, db_path, table_name="data"):
+        """
+        Creates a new manager of the database at the specified path.
+
+        :param db_path location of the database (will be created if it doesn't exist)
+        :param table_name optional name of the table containing all results
+        """
+        self.db_path = db_path
+        self.table_name = table_name
+        self.idP_column = "IdP"
+        self.test_id_column = "TestId"
+        self.result_column = "Result"
+
+        con = sqlite.connect(self.db_path)
+        cur = con.cursor()
+        sql = "CREATE TABLE IF NOT EXISTS {table_name} ({idP}, {test_id}, {result});".format(table_name=self.table_name,
+                                                                                             idP=self.idP_column,
+                                                                                             test_id=self.test_id_column,
+                                                                                             result=self.result_column)
+        cur.execute(sql)
+        sql = "CREATE UNIQUE INDEX IF NOT EXISTS idx_idp_test ON {table_name} ({idP}, {test_id});".format(
+            table_name=self.table_name, idP=self.idP_column, test_id=self.test_id_column)
+        cur.execute(sql);
+        con.commit()
+        con.close()
+
+    def update_test_result(self, idp, test, result):
+        """
+        Updates the result of an IdP on a test.
+
+        :param idp IdP identifier
+        :param test test identifier
+        :param result the raw result (as dictionary).
+        """
+        con = sqlite.connect(self.db_path)
+        sql = "REPLACE INTO {table_name} ({idP}, {test_id}, {result}) VALUES (?, ?, ?);".format(
+            table_name=self.table_name,
+            idP=self.idP_column,
+            test_id=self.test_id_column,
+            result=self.result_column)
+
+        # Serialize the result
+        result = pickle.dumps(result)
+
+        con.cursor().execute(sql, (idp, test, result))
+        con.commit()
+        con.close()
+
+    def get_overview_data(self):
+        """
+        Fetch all the latest test results.
+
+        :return: Dictionary containing all results for IdP idp on test t in dict[idp][t]
+        """
+        con = sqlite.connect(self.db_path)
+        sql = "SELECT {idP}, {test_id}, {result} FROM {table_name};".format(table_name=self.table_name,
+                                                                            idP=self.idP_column,
+                                                                            test_id=self.test_id_column,
+                                                                            result=self.result_column)
+        result_set = con.cursor().execute(sql).fetchall()
+        con.close()
+
+        overview = {}
+        for e in result_set:
+            idp, test, result = e
+            if idp not in overview:
+                overview[idp] = {}
+            overview[idp][test] = pickle.loads(result)  # Deserialize the result
+        return overview
 
 
 # ----------------------------------------------------------------------------
@@ -803,7 +888,7 @@ def application(environ, start_response):
                 str_ec_seq.append(str(ec))
 
             argv = {
-                #"ec_seq_json": json.dumps(EC_SEQUENCE),
+                # "ec_seq_json": json.dumps(EC_SEQUENCE),
                 "ec_seq": str_ec_seq,
                 "ec_info": EC_INFORMATION
             }
@@ -814,8 +899,8 @@ def application(environ, start_response):
         resp = BadRequest("%s" % err)
         return resp(environ, start_response)
     except Exception, err:
-        #_err = exception_trace("RUN", err)
-        #logging.error(exception_trace("RUN", _err))
+        # _err = exception_trace("RUN", err)
+        # logging.error(exception_trace("RUN", _err))
         print >> sys.stderr, err
         resp = ServiceError("%s" % err)
         return resp(environ, start_response)
@@ -830,6 +915,8 @@ SERVER_KEY = server_conf.SERVER_KEY
 # This is of course the certificate chain for the CA that signed
 # you cert and all the way up to the top
 CERT_CHAIN = server_conf.CERT_CHAIN
+
+DB_HANDLER = ResultsDBHandler(server_conf.DB_PATH)
 
 if __name__ == '__main__':
     from cherrypy import wsgiserver
