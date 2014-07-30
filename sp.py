@@ -168,7 +168,7 @@ EC_INFORMATION = {
         "Name": "RE & SFS & HEI",
         "Description": RE_DESC + "<br /><br />" + SFS_DESC + "<br /><br />" +
                        HEI_DESC},
-    }
+}
 
 SP = {}
 SEED = ""
@@ -409,13 +409,14 @@ class Service(object):
 
 
 class ACS(Service):
-    def __init__(self, sp, environ, start_response, cache=None, **kwargs):
+    def __init__(self, sp, ec_test, environ, start_response, cache=None, **kwargs):
         Service.__init__(self, environ, start_response)
         self.sp = sp
         self.outstanding_queries = cache.outstanding_queries
         self.cache = cache
         self.response = None
         self.kwargs = kwargs
+        self.ec_test = ec_test
 
     def do(self, response, binding, relay_state="", mtype="response"):
         """
@@ -456,7 +457,7 @@ class ACS(Service):
 
         _cmp = self.verify_attributes(self.response.ava)
         # Log result to DB
-        DB_HANDLER.update_test_result(_resp.issuer.text, self.sp.config.entityid, _cmp)
+        DB_HANDLER.update_test_result(_resp.issuer.text, self.ec_test, _cmp)
 
         logger.info(">%s>%s> %s" % (_resp.issuer.text, self.sp.config.entityid,
                                     _cmp))
@@ -755,10 +756,10 @@ def add_urls():
         else:
             base = "acs/%s" % ec
 
-        urls.append(("%s/post$" % base, (ACS, "post", SP[ec])))
-        urls.append(("%s/post/(.*)$" % base, (ACS, "post", SP[ec])))
-        urls.append(("%s/redirect$" % base, (ACS, "redirect", SP[ec])))
-        urls.append(("%s/redirect/(.*)$" % base, (ACS, "redirect", SP[ec])))
+        urls.append(("%s/post$" % base, (ACS, "post", SP[ec], ec)))
+        urls.append(("%s/post/(.*)$" % base, (ACS, "post", SP[ec], ec)))
+        urls.append(("%s/redirect$" % base, (ACS, "redirect", SP[ec], ec)))
+        urls.append(("%s/redirect/(.*)$" % base, (ACS, "redirect", SP[ec], ec)))
 
 
 # ----------------------------------------------------------------------------
@@ -865,8 +866,8 @@ def application(environ, start_response):
             match = re.search(regex, path)
             if match is not None:
                 if isinstance(spec, tuple):
-                    callback, func_name, _sp = spec
-                    cls = callback(_sp, environ, start_response, cache=CACHE)
+                    callback, func_name, _sp, ec_test = spec
+                    cls = callback(_sp, ec_test, environ, start_response, cache=CACHE)
                     func = getattr(cls, func_name)
                     return func()
                 else:
@@ -891,6 +892,20 @@ def application(environ, start_response):
                 # "ec_seq_json": json.dumps(EC_SEQUENCE),
                 "ec_seq": str_ec_seq,
                 "ec_info": EC_INFORMATION
+            }
+            return resp(environ, start_response, **argv)
+        if re.match(".*overview", path):
+            resp = Response(mako_template="test_overview.mako",
+                            template_lookup=LOOKUP,
+                            headers=[])
+            str_ec_seq = []
+            for ec in EC_SEQUENCE:
+                str_ec_seq.append(str(ec))
+            argv = {
+                # "ec_seq_json": json.dumps(EC_SEQUENCE),
+                "ec_seq": json.dumps(str_ec_seq),
+                "ec_info": json.dumps(EC_INFORMATION),
+                "test_results": json.dumps(DB_HANDLER.get_overview_data())
             }
             return resp(environ, start_response, **argv)
         return not_found(environ, start_response)
