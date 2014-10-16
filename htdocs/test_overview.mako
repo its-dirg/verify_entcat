@@ -98,6 +98,17 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
+        .cw-table-list {
+            margin: 0px !important;
+            table-layout: fixed;
+        }
+
+        .cw-table-list td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -132,14 +143,16 @@
         </div>
     </div>
 
-    <table ng-controller="TableCtrl" class="table table-bordered">
+    <table ng-controller="TableCtrl" class="table table-bordered cw-table-list">
         <thead>
         <tr>
             <th><strong>IdP</strong></th>
-            <th ng-repeat="data in ec_info" class="col-md-1">
+            <th ng-repeat="data in ec_info">
                 <button type="button"
                         class="btn btn-default ellipsis_text"
-                        ng-click="test_button_onclick(data.name, data.desc)">
+                        ng-click="test_button_onclick(data.name, data.desc)"
+                        data-toggle="popover"
+                        data-content="{{data.name}}">
                     <strong>{{data.name}}</strong>
                 </button>
             </th>
@@ -148,12 +161,22 @@
 
         <tbody>
         <tr ng-repeat="(idp, data) in test_results">
-            <td>{{idp}}</td>
+
+            <td>
+                <span data-toggle="popover"
+                      data-content="{{idp}}">
+                {{idp}}
+                </span>
+            </td>
+
             <td class="col-md-1" ng-repeat="test in data">
+
                 <button ng-show="has_result(test)"
                         type="button"
                         class="btn {{test.html.css_class}} ellipsis_text"
-                        ng-click="test_button_onclick(test.name + ' : ' + idp, test.results_as_text)">
+                        ng-click="test_button_onclick(test.name + ' : ' + idp, test.results_as_text)"
+                        data-toggle="popover"
+                        data-content="{{test.html.display_text}}">
                     {{test.html.display_text}}
                 </button>
             </td>
