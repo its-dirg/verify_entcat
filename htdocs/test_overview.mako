@@ -92,6 +92,12 @@
             margin: 1.25em 0;
             text-align: left;
         }
+
+        .ellipsis_text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -131,7 +137,9 @@
         <tr>
             <th><strong>IdP</strong></th>
             <th ng-repeat="data in ec_info" class="col-md-1">
-                <button type="button" class="btn btn-default" ng-click="header_cell_onclick(data.name, data.desc)">
+                <button type="button"
+                        class="btn btn-default ellipsis_text"
+                        ng-click="test_button_onclick(data.name, data.desc)">
                     <strong>{{data.name}}</strong>
                 </button>
             </th>
@@ -142,9 +150,10 @@
         <tr ng-repeat="(idp, data) in test_results">
             <td>{{idp}}</td>
             <td class="col-md-1" ng-repeat="test in data">
-                <button ng-show="has_result(test)" type="button" class="btn {{test.html.css_class}}"
-                        data-toggle="popover" title="{{test.name}}: {{idp}}"
-                        data-content="{{test.results_as_text}}">
+                <button ng-show="has_result(test)"
+                        type="button"
+                        class="btn {{test.html.css_class}} ellipsis_text"
+                        ng-click="test_button_onclick(test.name + ' : ' + idp, test.results_as_text)">
                     {{test.html.display_text}}
                 </button>
             </td>
@@ -232,7 +241,7 @@
          * @param test_name name of the test
          * @param test_description description of the test
          */
-        $scope.header_cell_onclick = function (test_name, test_description) {
+        $scope.test_button_onclick = function (test_name, test_description) {
             $('#testDescriptionModalLabel').text(test_name);
             $('#testDescriptionModalBody').html(test_description);
             $('#testDescriptionModal').modal('show');
