@@ -27,10 +27,7 @@
             max-width: 300px;
         }
 
-        .btn-ok,
-        .btn-too-many,
-        .btn-too-few,
-        .btn-too-many-and-few {
+        .btn {
             color: #333333;
             border-color: #cccccc;
             width: 100%;
@@ -54,32 +51,6 @@
 
         .btn-too-many-and-few {
             background-color: #ff7f7f;
-        }
-
-        .btn-ok:hover,
-        .btn-too-many:hover,
-        .btn-too-few:hover,
-        .btn-too-many-and-few:hover {
-            color: #333333;
-            background-color: #ebebeb;
-            border-color: #adadad;
-        }
-
-        /* Make the buttons appear 'unclickable' */
-        .btn-ok:focus,
-        .btn-ok:active:focus,
-        .btn-ok.active:focus,
-        .btn-too-many:focus,
-        .btn-too-many:active:focus,
-        .btn-too-many.active:focus,
-        .btn-too-few:focus,
-        .btn-too-few:active:focus,
-        .btn-too-few.active:focus,
-        .btn-too-many-and-few:focus,
-        .btn-too-many-and-few:active:focus,
-        .btn-too-many-and-few.active:focus {
-            outline: none;
-            outline-offset: 0;
         }
 
         .modal-large {
@@ -137,9 +108,31 @@
             <p class="small">
                 The headline of each column can be clicked to view more information about the tested entity category and
                 which attributes should be returned. <br/>
-                Each individual test result in the table can be hovered for a complete list of the missing and/or
+                Each individual test result in the table can be clicked for a complete list of the missing and/or
                 extra attributes from the IdP.
             </p>
+
+            <table class="table table-bordered" style="width: 25%">
+                <tr>
+                    <th class="col-md-2">Possible test status</th>
+                </tr>
+
+                <tr>
+                    <td class="col-md-2 btn-ok">OK</td>
+                </tr>
+
+                <tr>
+                    <td class="col-md-2 btn-too-many">Too many</td>
+                </tr>
+
+                <tr>
+                    <td class="col-md-2 btn-too-few">Too few</td>
+                </tr>
+
+                <tr>
+                    <td class="col-md-2 btn-too-many-and-few">Too many & too few</td>
+                </tr>
+            </table>
         </div>
     </div>
 
@@ -153,7 +146,7 @@
                         ng-click="test_button_onclick(data.name, data.desc)"
                         data-toggle="popover"
                         data-content="{{data.name}}">
-                    <strong>{{data.name}}</strong>
+                    <span style="padding: 4px"><strong>{{data.name}}</strong></span>
                 </button>
             </th>
         </tr>
@@ -162,11 +155,9 @@
         <tbody>
         <tr ng-repeat="(idp, data) in test_results">
 
-            <td>
-                <span data-toggle="popover"
+            <td data-toggle="popover"
                       data-content="{{idp}}">
                 {{idp}}
-                </span>
             </td>
 
             <td class="col-md-1" ng-repeat="test in data">
@@ -177,12 +168,14 @@
                         ng-click="test_button_onclick(test.name + ' : ' + idp, test.results_as_text)"
                         data-toggle="popover"
                         data-content="{{test.html.display_text}}">
-                    {{test.html.display_text}}
+                    <span style="padding: 4px">{{test.html.display_text}}</span>
                 </button>
             </td>
         </tr>
         </tbody>
     </table>
+    <br>
+    <br>
 </div>
 
 <div class="modal fade" id="testDescriptionModal" tabindex="-1" role="dialog"
