@@ -50,6 +50,8 @@
 
     <title></title>
     <script language="JavaScript">
+        var $j = jQuery.noConflict();
+
         var sortByNameValue = 1;
         var sortByStatusValue = 2;
 
@@ -61,38 +63,38 @@
         var sortOrder=sortByNameValue;
 
         function toggleArrow(id,pic1,pic2) {
-            if ($('#'+id).attr('src') == pic1) {
-                $('#'+id).attr('src',pic2);
+            if ($j('#'+id).attr('src') == pic1) {
+                $j('#'+id).attr('src',pic2);
             } else {
-                $('#'+id).attr('src',pic1);
+                $j('#'+id).attr('src',pic1);
             }
         }
 
 
         function toggleDisplay(id) {
-            if ($('#'+id).css('display') == 'none') {
-                $('#'+id).css('display','block')
+            if ($j('#'+id).css('display') == 'none') {
+                $j('#'+id).css('display','block')
             } else {
-                $('#'+id).css('display','none')
+                $j('#'+id).css('display','none')
             }
         }
 
 
         function showHoverColor(row) {
-            $('#'+row).attr('color',$('#'+row).css('background-color'));
-            $('#'+row).css('background-color', '#cdebf2');
+            $j('#'+row).attr('color',$j('#'+row).css('background-color'));
+            $j('#'+row).css('background-color', '#cdebf2');
         }
 
         function showOriginalColor(row) {
-            $('#'+row).css('background-color', $('#'+row).attr('color'));
+            $j('#'+row).css('background-color', $j('#'+row).attr('color'));
         }
 
         function setupRow(row, color, result, status, statusOrder) {
-            $('#'+row).css('background-color',color);
-            $('#'+row).attr('color', color);
-            $('#'+row+"_result").html('<b>Test result</b><br />'+result);
-            $('#'+row+"_status").html(status);
-            $('#'+row).attr('status',statusOrder);
+            $j('#'+row).css('background-color',color);
+            $j('#'+row).attr('color', color);
+            $j('#'+row+"_result").html('<b>Test result</b><br />'+result);
+            $j('#'+row+"_status").html(status);
+            $j('#'+row).attr('status',statusOrder);
             sortList();
         }
 
@@ -142,36 +144,36 @@
         }
 
         function hideLogin() {
-            $("#background").hide();
-            $("#iframe").hide();
-            $("#iframeDescription").hide();
-            $('#execute').remove();
-            $(".container").show();
+            $j("#background").hide();
+            $j("#iframe").hide();
+            $j("#iframeDescription").hide();
+            $j('#execute').remove();
+            $j(".container").show();
         }
 
 
         function showLogin() {
-            if ($('#execute').length > 0) {
-                $(".container").hide();
-                $("#background").show();
-                $("#iframe").show();
-                $("#iframeDescription").show();
-                $("#execute").show();
+            if ($j('#execute').length > 0) {
+                $j(".container").hide();
+                $j("#background").show();
+                $j("#iframe").show();
+                $j("#iframeDescription").show();
+                $j("#execute").show();
             }
         }
 
         function verifyIfLogin() {
             try{
-                $("#execute")[0].contentWindow.exists();
+                $j("#execute")[0].contentWindow.exists();
             }catch(e){
                 showLogin();
             }
         }
 
         function callIframe(id, url, callback) {
-            $('#iframe').html('<IFRAME id="'+id+'" >');
-            $('iframe#'+id).attr('src', url);
-            $('iframe#'+id).load(function()
+            $j('#iframe').html('<IFRAME id="'+id+'" >');
+            $j('iframe#'+id).attr('src', url);
+            $j('iframe#'+id).load(function()
             {
                 callback(this);
             });
@@ -210,8 +212,8 @@
 
         function setNoTestIsRunning() {
             testIsRunning = false;
-            $('.btn').removeAttr('style');
-            $('#running_test').hide();
+            $j('.btn').removeAttr('style');
+            $j('#running_test').hide();
             if (sortOrder==sortByStatusValue) {
                 sortByStatus();
             }
@@ -220,8 +222,8 @@
 
         function setTestIsRunning() {
             testIsRunning = true;
-            $('.btn').attr('style','background-color:#c9c9c9;');
-            $('#running_test').show();
+            $j('.btn').attr('style','background-color:#c9c9c9;');
+            $j('#running_test').show();
         }
 
         function runAll() {
@@ -245,39 +247,39 @@
         function setupec_seq() {
             ec_seq = new Array();
             count = 0;
-            $('#rowContainer').children().each( function() {
-                ec_seq[count] = $(this).attr('id');
+            $j('#rowContainer').children().each( function() {
+                ec_seq[count] = $j(this).attr('id');
                 count++;
             } );
         }
 
         function sortList() {
-            $('ul>li').tinysort();
+            $j('ul>li').tinysort();
         }
 
 
         function sortByName() {
             sortOrder=sortByNameValue;
-            $('#descHeader').css('text-decoration','underline');
-            $('#statusHeader').css('text-decoration','none');
-            $('div#rowContainer>div').tinysort('',{attr:'name'});
+            $j('#descHeader').css('text-decoration','underline');
+            $j('#statusHeader').css('text-decoration','none');
+            $j('div#rowContainer>div').tinysort('',{attr:'name'});
              setupec_seq();
         }
 
         function sortByStatus() {
             sortOrder=sortByStatusValue;
-            $('#descHeader').css('text-decoration','none');
-            $('#statusHeader').css('text-decoration','underline');
-            $('div#rowContainer>div').tinysort('',{attr:'status'});
+            $j('#descHeader').css('text-decoration','none');
+            $j('#statusHeader').css('text-decoration','underline');
+            $j('div#rowContainer>div').tinysort('',{attr:'status'});
             setupec_seq();
         }
 
-        $(document).ready(function() {
-            $('#iframe').width($('html').width()-40);
-            $('#iframe').height($('html').height()-140);
-            $('#iframeDescription').width($('html').width()-40);
-            $('#iframeDescription').height(100);
-            $('#iframeDescription').css('margin-top',$('html').height()-140+'px')
+        $j(document).ready(function() {
+            $j('#iframe').width($j('html').width()-40);
+            $j('#iframe').height($j('html').height()-140);
+            $j('#iframeDescription').width($j('html').width()-40);
+            $j('#iframeDescription').height(100);
+            $j('#iframeDescription').css('margin-top',$j('html').height()-140+'px')
             sortByName();
             sortList();
         });

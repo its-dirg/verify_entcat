@@ -6,10 +6,12 @@
     <title></title>
 </head>
     <script language="JavaScript">
+        var $j = jQuery.noConflict();
+
         function exists() {
             return true;
         }
-        $(document).ready(function() {
+        $j(document).ready(function() {
             window.parent.verifyData('${cmp}');
          });
     </script>
