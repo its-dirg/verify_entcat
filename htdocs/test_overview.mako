@@ -200,11 +200,9 @@
 <script type="application/javascript">
     'use strict';
 
-    var $j = jQuery.noConflict();
-
     // Enable all popovers, disabled by default in Bootstrap
     $(function () {
-        $j("[data-toggle='popover']").popover({
+        $("[data-toggle='popover']").popover({
             html: true,
             trigger: 'hover',
             placement: 'bottom',
@@ -260,9 +258,9 @@
          * @param test_description description of the test
          */
         $scope.test_button_onclick = function (test_name, test_description) {
-            $j('#testDescriptionModalLabel').text(test_name);
-            $j('#testDescriptionModalBody').html(test_description);
-            $j('#testDescriptionModal').modal('show');
+            $('#testDescriptionModalLabel').text(test_name);
+            $('#testDescriptionModalBody').html(test_description);
+            $('#testDescriptionModal').modal('show');
         }
 
         /**

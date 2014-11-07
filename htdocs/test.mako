@@ -61,6 +61,7 @@
 
         var ec_seq = ${ec_seq};
         var sortOrder=sortByNameValue;
+        var isLoggedIn = false;
 
         function toggleArrow(id,pic1,pic2) {
             if ($j('#'+id).attr('src') == pic1) {
@@ -119,6 +120,7 @@
             } else {
                 setupRow(testname, '#fdff7f', getRepsonseAsText(cmp.data), 'Too few', 2);
             }
+            isLoggedIn = true
             hideLogin();
             setTimeout("runNext()", 2000);
         }
@@ -164,7 +166,10 @@
 
         function callIframe(id, url) {
             $j('#iframe').html('<IFRAME id="'+id+'" >');
-            showLogin();
+
+            if (!isLoggedIn)
+                showLogin();
+
             $j('iframe#'+id).attr('src', url);
         }
 
@@ -198,6 +203,7 @@
         }
 
         function setNoTestIsRunning() {
+            isLoggedIn = false;
             testIsRunning = false;
             $j('.btn').removeAttr('style');
             $j('#running_test').hide();
