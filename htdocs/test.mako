@@ -162,27 +162,14 @@
             }
         }
 
-        function verifyIfLogin() {
-            try{
-                $j("#execute")[0].contentWindow.exists();
-            }catch(e){
-                showLogin();
-            }
-        }
-
-        function callIframe(id, url, callback) {
+        function callIframe(id, url) {
             $j('#iframe').html('<IFRAME id="'+id+'" >');
+            showLogin();
             $j('iframe#'+id).attr('src', url);
-            $j('iframe#'+id).load(function()
-            {
-                callback(this);
-            });
         }
 
         function performTest(type) {
-            callIframe('execute', "/ecat?c="+type, function(me){
-                setTimeout("verifyIfLogin()", 1500);
-            });
+            callIframe('execute', "/ecat?c="+type);
         }
 
         function runNext() {
