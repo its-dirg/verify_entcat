@@ -5,7 +5,7 @@ import os
 from subprocess import Popen, PIPE
 from saml2.sigver import get_xmlsec_binary
 import subprocess
-
+import server_conf
 
 class RunScript:
     def runScript(self, command, working_directory=None):
@@ -32,7 +32,7 @@ MAKE_METADATA = "make_metadata.py"
 XMLSEC = get_xmlsec_binary(["/opt/local/bin", "/usr/local/bin"])
 
 MDNS = '"urn:oasis:names:tc:SAML:2.0:metadata"'
-NFORMAT = "130.239.200.133%ssp.xml"
+NFORMAT = "{HOST}%ssp.xml".format(HOST=server_conf.HOST)
 
 CNFS = [""]
 COMBOS = json.loads(open("build.json").read())

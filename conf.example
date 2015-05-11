@@ -1,6 +1,7 @@
 from saml2 import BINDING_HTTP_REDIRECT
 from saml2 import BINDING_HTTP_POST
 from saml2.saml import NAME_FORMAT_URI
+import server_conf
 
 try:
     from saml2.sigver import get_xmlsec_binary
@@ -13,7 +14,8 @@ if get_xmlsec_binary:
 else:
     xmlsec_path = '/usr/local/bin/xmlsec1'
 
-BASE = "http://myip:myport"
+
+BASE = "http://{HOST}:{PORT}".format(HOST=server_conf.HOST, PORT=server_conf.PORT)
 
 CONFIG = {
     "entityid": "%s/%ssp.xml" % (BASE, ""),
