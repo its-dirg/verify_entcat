@@ -6,6 +6,7 @@ import pickle
 import re
 import argparse
 from paste.httpheaders import category
+from saml2.config import Config, config_factory, SPConfig
 import category_desc_conf
 import server_conf
 
@@ -879,9 +880,13 @@ if __name__ == '__main__':
     else:
         SEED = "SnabbtInspel"
 
-    SP[""] = Saml2Client(config_file="%s" % CNFBASE)
+    sp_base_conf = SPConfig().load_file("%s" % CNFBASE, metadata_construction=False)
+
+    SP[""] = Saml2Client(config=sp_base_conf)
     for variant in EC_SEQUENCE[1:]:
-        SP[variant] = Saml2Client(config_file="%s_%s" % (CNFBASE, variant))
+        sp_conf = SPConfig().load_file("%s" % CNFBASE, metadata_construction=True)
+        sp_conf.metadata = sp_base_conf.metadata
+        SP[variant] = Saml2Client(config=sp_conf)
 
     POLICY = server_conf.POLICY
 
