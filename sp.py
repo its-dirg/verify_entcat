@@ -425,7 +425,7 @@ class ACS(Service):
 
 class SSO(object):
     def __init__(self, sp, environ, start_response, cache=None,
-                 wayf=None, discosrv=None, bindings=None):
+                 wayf=None, discosrv=None, bindings=None, entity_id=None):
         self.sp = sp
         self.environ = environ
         self.start_response = start_response
@@ -433,6 +433,7 @@ class SSO(object):
         self.idp_query_param = "IdpQuery"
         self.wayf = wayf
         self.discosrv = discosrv
+        self.entity_id = entity_id
         if bindings:
             self.bindings = bindings
         else:
@@ -499,7 +500,7 @@ class SSO(object):
         # Find all IdPs
         idps = self.sp.metadata.with_descriptor("idpsso")
 
-        idp_entity_id = None
+        idp_entity_id = self.entity_id
 
         kaka = self.environ.get("HTTP_COOKIE", '')
         if kaka:
@@ -858,6 +859,8 @@ if __name__ == '__main__':
     _parser = argparse.ArgumentParser()
     _parser.add_argument('-d', dest='debug', action='store_true',
                          help="Print debug information")
+    _parser.add_argument('-E', dest='entity_id',
+                         help="If you only want to test one IdP you can manually set the entity id.")
     _parser.add_argument('-D', dest='discosrv',
                          help="Which disco server to use")
     _parser.add_argument('-s', dest='seed',
@@ -868,6 +871,8 @@ if __name__ == '__main__':
 
     ARGS = {}
     _args = _parser.parse_args()
+    if _args.entity_id:
+        ARGS["entity_id"] = _args.entity_id
     if _args.discosrv:
         ARGS["discosrv"] = _args.discosrv
     if _args.wayf:
@@ -884,7 +889,7 @@ if __name__ == '__main__':
 
     SP[""] = Saml2Client(config=sp_base_conf)
     for variant in EC_SEQUENCE[1:]:
-        sp_conf = SPConfig().load_file("%s" % CNFBASE, metadata_construction=True)
+        sp_conf = SPConfig().load_file(config_file="%s_%s" % (CNFBASE, variant), metadata_construction=True)
         sp_conf.metadata = sp_base_conf.metadata
         SP[variant] = Saml2Client(config=sp_conf)
 
