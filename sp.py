@@ -8,6 +8,7 @@ import argparse
 from paste.httpheaders import category
 from saml2.config import Config, config_factory, SPConfig
 import category_desc_conf
+from category_desc_conf import RETURN_CATEGORY
 import server_conf
 
 from Cookie import SimpleCookie
@@ -64,14 +65,12 @@ EC_SEQUENCE.extend(COMBOS.keys())
 EC_INFORMATION = {
     "": {"Name": "Base category",
          "Description": (
-             "<b>Base category</b><br />A basic category that only should "
-             "return the attribute:"
-             "<ul><li>eduPersonTargetedID</li></ul>")},
+             "<b>Base category</b><br />A basic category.")},
     "coc": {"Name": "CoC", "Description": category_desc_conf.COC_DESC},
     "nren": {"Name": "NREN", "Description": category_desc_conf.NREN_DESC},
     "re": {"Name": "RE", "Description": category_desc_conf.RE_DESC},
     "sfs": {"Name": "SFS", "Description": category_desc_conf.SFS_DESC},
-    "r_and_s": {"Name": "RS", "Description": category_desc_conf.RS_DESC},
+    "r_and_s": {"Name": "R&S", "Description": category_desc_conf.RS_DESC},
     "re_eu": {"Name": "RE & EU",
               "Description": category_desc_conf.RE_DESC + "<br /><br />" + category_desc_conf.EU_DESC},
     "re_hei": {"Name": "RE & HEI",
@@ -370,7 +369,6 @@ class ACS(Service):
 
         # logger.info("parsed OK")
         _resp = self.response.response
-
         logger.info("AVA: %s" % self.response.ava)
 
         _cmp = self.verify_attributes(self.response.ava)
@@ -579,7 +577,7 @@ class SSO(object):
             logger.exception(exc)
             resp = ServiceError(
                 "Failed to construct the AuthnRequest: %s" % exc)
-            return resp(self.environ, self.start_response)
+            return resp
 
         # remember the request
         self.cache.outstanding_queries[_sid] = came_from
@@ -894,7 +892,17 @@ if __name__ == '__main__':
         SP[variant] = Saml2Client(config=sp_conf)
 
     POLICY = server_conf.POLICY
-
+    for entcat in SP:
+        sp = SP[entcat]
+        attr_list = POLICY.get_entity_categories(sp.config.entityid, sp.metadata)
+        attr_html_list = ""
+        if attr_list is not None and len(attr_list) > 0:
+            attr_html_list += "<ul>"
+            for attr in attr_list:
+                attr_html_list += "<li>%s</li>" % attr
+            attr_html_list += "</ul>"
+            EC_INFORMATION[entcat]["Description"] += RETURN_CATEGORY + attr_html_list
+        pass
     add_urls()
 
     SRV = wsgiserver.CherryPyWSGIServer(('0.0.0.0', PORT), application)

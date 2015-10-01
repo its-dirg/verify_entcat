@@ -55,8 +55,6 @@ for cnf in CNFS:
     pof = Popen(com_list, stderr=PIPE, stdout=PIPE)
 
     txt = pof.stdout.read()
-    txt = txt.replace(MDNS,
-                      MDNS+" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"")
     f = open(NFORMAT % fname, "w")
     f.write(txt)
     f.close()
