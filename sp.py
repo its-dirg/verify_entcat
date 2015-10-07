@@ -369,6 +369,10 @@ class ACS(Service):
 
         # logger.info("parsed OK")
         _resp = self.response.response
+        try:
+            logger.info("SAML Response: %s" % str(self.response))
+        except Exception:
+            pass
         logger.info("AVA: %s" % self.response.ava)
 
         _cmp = self.verify_attributes(self.response.ava)
