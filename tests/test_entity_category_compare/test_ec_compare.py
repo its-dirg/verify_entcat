@@ -1,11 +1,9 @@
 from collections import Counter
-
 import pytest
 from saml2.assertion import Policy
 from saml2.entity_category.edugain import COC
 from saml2.entity_category.refeds import RESEARCH_AND_SCHOLARSHIP
 from saml2.entity_category.swamid import NREN, RESEARCH_AND_EDUCATION, EU, HEI, SFS_1993_1153
-
 from entity_category_compare.ec_compare import EntityCategoryComparison
 
 
@@ -65,3 +63,12 @@ class TestEntityCategoryVerifier:
         assert Counter(diff.extra_attributes) == Counter(
             ['displayname', 'edupersonscopedaffiliation', 'edupersonprincipalname',
              'schachomeorganization', 'mail'])
+
+    def test_case_insensitive_compare_of_attribute_names(self):
+        diff = self.entity_category_comparer([COC], {k: None for k in
+                                                     ['EDUPERSONTARGETEDID', 'displayName',
+                                                      'eduPersonScopedAffiliation',
+                                                      'edupErsonPrinciPalnAme',
+                                                      'ScHaChoMEoRgAniZaTiOn', 'MAIL']})
+
+        assert len(diff) == 0

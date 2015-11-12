@@ -19,15 +19,16 @@ class EntityCategoryComparison:
         expected_attributes = self.policy.get("entity_categories", None,
                                               post_func=self.expected_attributes_for_entity_categories,
                                               entity_categories=entity_categories)
+        lowercase_attribute_names = [k.lower() for k in attributes.keys()]
 
         missing = []
         for key in expected_attributes:
-            if key.lower() not in [k for k in attributes.keys()]:
+            if key.lower() not in lowercase_attribute_names:
                 missing.append(key)
 
         extra = []
-        for key in attributes:
-            if key.lower() not in expected_attributes:
+        for key in lowercase_attribute_names:
+            if key not in expected_attributes:
                 extra.append(key)
         return EntityCategoryTestResult(missing, extra)
 
