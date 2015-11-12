@@ -1,3 +1,4 @@
+import base64
 import functools
 import os
 from unittest.mock import Mock
@@ -5,25 +6,23 @@ from urllib.parse import urlparse, parse_qs, parse_qsl
 
 import pytest
 from lxml import html
-from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
+from saml2 import server, BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
+from saml2.assertion import Policy
+from saml2.authn_context import PASSWORD
 from saml2.client import Saml2Client
-from saml2.config import SPConfig
+from saml2.config import SPConfig, IdPConfig
 from saml2.entity_category.refeds import RESEARCH_AND_SCHOLARSHIP
 from saml2.extension.idpdisc import BINDING_DISCO
+from saml2.metadata import entity_descriptor
+from saml2.saml import NameID, NAMEID_FORMAT_TRANSIENT
 
-from service_provider.saml import SSO
+from service_provider.saml import SSO, ACS
 
 SP_BASE = "https://verify_entcat.example.com"
 
 
 def full_path(filename):
     return os.path.join(os.path.abspath(os.path.dirname(__file__)), filename)
-
-
-def get_endpoint_by_binding(binding, endpoints):
-    for endpoint in endpoints:
-        if endpoint["binding"] == binding:
-            return endpoint
 
 
 def verify_redirect_binding_request(metadata, auth_request):
@@ -103,6 +102,11 @@ def sp_config():
     return SPConfig().load(config)
 
 
+@pytest.fixture(scope="session")
+def sp_metadata(sp_config):
+    return entity_descriptor(sp_config).to_string()
+
+
 @pytest.fixture
 def sp_instance(sp_config):
     return Saml2Client(config=sp_config)
@@ -158,3 +162,32 @@ class TestSSO:
     def test_rejects_no_entityid_or_disco_url(self):
         with pytest.raises(ValueError):
             SSO()
+
+
+class TestACS:
+    @pytest.fixture(autouse=True)
+    def setup(self, sp_instance):
+        self.sp = sp_instance
+        self.acs = ACS(Policy({"default": {"entity_categories": ["refeds", "edugain"]}}))
+
+    def test_get_result(self, sp_metadata):
+        idp = server.Server(config=IdPConfig().load({"metadata": {"inline": [sp_metadata]}}))
+
+        authn_response = idp.create_authn_response({"eduPersonPrincipalName": None,
+                                                    "eduPersonScopedAffiliation": None,
+                                                    "mail": None,
+                                                    "givenName": None, "sn": None,
+                                                    "displayName": None},
+                                                   in_response_to=None, destination=None,
+                                                   sp_entity_id=self.sp.config.entityid,
+                                                   issuer="https://idp.example.com",
+                                                   name_id=NameID(format=NAMEID_FORMAT_TRANSIENT,
+                                                                  sp_name_qualifier=None,
+                                                                  name_qualifier=None,
+                                                                  text="Tester"),
+                                                   authn={"class_ref": PASSWORD})
+        saml_response = base64.b64encode(str(authn_response).encode("utf-8"))
+        self.sp.allow_unsolicited = True
+        session = {}
+        self.acs.do(self.sp, saml_response, None, "r_s", session)
+        assert session["r_s"].missing_attributes == set(["edupersontargetedid"])

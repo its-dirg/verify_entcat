@@ -2,13 +2,16 @@ import logging
 
 from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
 from saml2.httputil import SeeOther, ServiceError, Response
+from saml2.response import StatusError
 from saml2.s_utils import rndstr
+
+from entity_category_compare.ec_compare import EntityCategoryComparison
 
 logger = logging.getLogger(__name__)
 
 
 class ServiceProviderRequestHandler:
-    def do(self, sp):
+    def do(self, sp, *args, **kwargs):
         raise NotImplementedError()
 
 
@@ -19,7 +22,7 @@ class SSO(ServiceProviderRequestHandler):
             raise ValueError(
                 "Specify either a single IdP's entity id or the url to a discovery service.")
 
-        self.entity_id = idp_entity_id
+        self.idp_entity_id = idp_entity_id
         self.discovery_service_url = discovery_service_url
         if bindings:
             self.bindings = bindings
@@ -27,8 +30,8 @@ class SSO(ServiceProviderRequestHandler):
             self.bindings = [BINDING_HTTP_REDIRECT, BINDING_HTTP_POST]
 
     def do(self, sp):
-        if self.entity_id:
-            return self._make_auth_request(sp, self.entity_id, {})
+        if self.idp_entity_id:
+            return self._make_auth_request(sp, self.idp_entity_id, {})
         elif self.discovery_service_url:
             return self._redirect_to_discovery_service(sp, self.discovery_service_url)
 
@@ -62,3 +65,39 @@ class SSO(ServiceProviderRequestHandler):
                                                            **{"return": return_to})
         logger.debug("Redirect to Discovery Service function: %s", redirect_url)
         return SeeOther(redirect_url)
+
+
+class ACS(ServiceProviderRequestHandler):
+    def __init__(self, attribute_release_policy):
+        self.entity_category_comparison = EntityCategoryComparison(attribute_release_policy)
+
+    def do(self, sp, auth_response, relay_state, test_id, session):
+        # TODO verify relay_state
+
+        # parse response
+        try:
+            saml_response = sp.parse_authn_request_response(auth_response, BINDING_HTTP_POST)
+        except StatusError as e:
+            resp = ServiceError("Error from the IdP: {}".format(e))
+            return resp
+        except Exception as e:
+            message = "{}: {}".format(type(e).__name__, str(e))
+            logger.error("%s: %s", type(e).__name__, str(e))
+            resp = ServiceError(message)
+            return resp
+
+        logger.debug("SAML Response: %s", saml_response)
+        logger.debug("AVA: %s" % saml_response.ava)
+
+        attribute_diff = self.entity_category_comparison(sp.config.entity_category,
+                                                         saml_response.ava)
+
+        # TODO simplify fetching of entity id
+        _resp = saml_response.response
+        logger.info(">%s>%s> %s", _resp.issuer.text, sp.config.entityid, attribute_diff)
+
+        # TODO store/update result in database
+        # TODO render test list with test marked as run with status
+
+        session[test_id] = attribute_diff
+        return Response("{}: {}".format(test_id, attribute_diff))

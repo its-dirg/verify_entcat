@@ -1,2 +1,3 @@
 pytest==2.8.2
 lxml==3.4.4
+-e git+https://github.com/rebeckag/pysaml2@optional_keydescr#egg=verify_entcat
