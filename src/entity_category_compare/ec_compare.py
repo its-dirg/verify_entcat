@@ -1,7 +1,10 @@
 class EntityCategoryTestResult:
     def __init__(self, missing, extra):
-        self.missing_attributes = missing
-        self.extra_attributes = extra
+        self.missing_attributes = set(missing)
+        self.extra_attributes = set(extra)
+
+    def __eq__(self, other):
+        return self.missing_attributes == other.missing_attributes and self.extra_attributes == other.extra_attributes
 
     def __len__(self):
         return len(self.missing_attributes) + len(self.extra_attributes)
