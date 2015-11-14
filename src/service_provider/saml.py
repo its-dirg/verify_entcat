@@ -27,7 +27,7 @@ class SSO(ServiceProviderRequestHandler):
         if bindings:
             self.bindings = bindings
         else:
-            self.bindings = [BINDING_HTTP_REDIRECT, BINDING_HTTP_POST]
+            self.bindings = [BINDING_HTTP_POST, BINDING_HTTP_REDIRECT]
 
     def do(self, sp):
         if self.idp_entity_id:

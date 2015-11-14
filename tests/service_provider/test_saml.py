@@ -121,15 +121,7 @@ class TestSSO:
         sso_handler = SSO(idp_entity_id="https://idp.example.com")
         auth_req = sso_handler.do(self.sp)
 
-        verify_redirect_binding_request(self.sp.metadata, auth_req)
-
-        redirect_request = urlparse(auth_req.message)
-        assert redirect_request.netloc == "idp.example.com"
-        assert redirect_request.path == "/SSO/redirect"
-
-        request_parameters = parse_qs(redirect_request.query)
-        assert "SAMLRequest" in request_parameters
-        assert "RelayState" in request_parameters
+        verify_post_binding_request(self.sp.metadata, auth_req)
 
     @pytest.mark.parametrize("forced_binding, custom_assert", [
         (BINDING_HTTP_POST, verify_post_binding_request),
