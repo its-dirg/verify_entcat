@@ -23,10 +23,12 @@ class EntityCategoryTestResult:
         elif len(extra) > 0:
             self.status = EntityCategoryTestStatus.too_many
 
-    def to_json(self):
-        return json.dumps({"missing_attributes": list(self.missing_attributes),
-                           "extra_attributes": list(self.extra_attributes),
-                           "status": self.status})
+    def to_dict(self):
+        return {
+            "missing_attributes": list(self.missing_attributes),
+            "extra_attributes": list(self.extra_attributes),
+            "status": self.status
+        }
 
     def __eq__(self, other):
         return self.missing_attributes == other.missing_attributes and self.extra_attributes == other.extra_attributes
