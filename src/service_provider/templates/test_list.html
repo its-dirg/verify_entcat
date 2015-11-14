@@ -140,9 +140,9 @@
                         </div>
 
                         <div class="col-md-6">
-                            {% for title, description in test_info.descriptions%}
-                                <h4>{{ title }}</h4>
-                                {{ description }}
+                            {% for description in test_info.descriptions %}
+                                <h4>{{ description.title }}</h4>
+                                {{ description.text }}
                             {% endfor %}
                         </div>
                     </div>
