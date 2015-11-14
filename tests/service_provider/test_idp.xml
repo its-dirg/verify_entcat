@@ -1,6 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ns0:EntityDescriptor xmlns:ns0="urn:oasis:names:tc:SAML:2.0:metadata"
-                      xmlns:ns1="http://www.w3.org/2000/09/xmldsig#"
                       entityID="https://idp.example.com">
     <ns0:IDPSSODescriptor WantAuthnRequestsSigned="false"
                           protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
@@ -10,9 +9,5 @@
                                  Location="https://idp.example.com/SSO/post"/>
         <ns0:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
                                  Location="https://idp.example.com/SSO/redirect"/>
-
     </ns0:IDPSSODescriptor>
-    <ns0:Organization>
-        <ns0:OrganizationName xml:lang="en">Verify Entity Categories Test IdP</ns0:OrganizationName>
-    </ns0:Organization>
 </ns0:EntityDescriptor>
