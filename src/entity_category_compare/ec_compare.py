@@ -1,4 +1,12 @@
 import json
+from enum import IntEnum
+
+
+class EntityCategoryTestStatus(IntEnum):
+    ok = 1
+    too_few = 2
+    too_many = 3
+    too_few_too_many = 4
 
 
 class EntityCategoryTestResult:
@@ -6,9 +14,19 @@ class EntityCategoryTestResult:
         self.missing_attributes = set(missing)
         self.extra_attributes = set(extra)
 
+        if len(self) == 0:
+            self.status = EntityCategoryTestStatus.ok
+        elif len(missing) > 0 and len(extra) > 0:
+            self.status = EntityCategoryTestStatus.too_few_too_many
+        elif len(missing) > 0:
+            self.status = EntityCategoryTestStatus.too_few
+        elif len(extra) > 0:
+            self.status = EntityCategoryTestStatus.too_many
+
     def to_json(self):
         return json.dumps({"missing_attributes": list(self.missing_attributes),
-                           "extra_attributes": list(self.extra_attributes)})
+                           "extra_attributes": list(self.extra_attributes),
+                           "status": self.status})
 
     def __eq__(self, other):
         return self.missing_attributes == other.missing_attributes and self.extra_attributes == other.extra_attributes

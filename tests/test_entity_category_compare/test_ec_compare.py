@@ -1,10 +1,12 @@
 from collections import Counter
+
 import pytest
 from saml2.assertion import Policy
 from saml2.entity_category.edugain import COC
 from saml2.entity_category.refeds import RESEARCH_AND_SCHOLARSHIP
 from saml2.entity_category.swamid import NREN, RESEARCH_AND_EDUCATION, EU, HEI, SFS_1993_1153
-from entity_category_compare.ec_compare import EntityCategoryComparison
+
+from entity_category_compare.ec_compare import EntityCategoryComparison, EntityCategoryTestStatus
 
 
 class TestEntityCategoryVerifier:
@@ -44,6 +46,7 @@ class TestEntityCategoryVerifier:
         diff = self.entity_category_comparer(entity_categories,
                                              {k: None for k in expected_attributes})
         assert len(diff) == 0
+        assert diff.status == EntityCategoryTestStatus.ok
 
     def test_missing_attributes_coc(self):
         diff = self.entity_category_comparer([COC], {k: None for k in ['displayname',
@@ -52,6 +55,7 @@ class TestEntityCategoryVerifier:
                                                                        ]})
         assert Counter(diff.missing_attributes) == Counter(
             ['edupersontargetedid', 'schachomeorganization', 'mail'])
+        assert diff.status == EntityCategoryTestStatus.too_few
 
     def test_extra_attributes_nren(self):
         diff = self.entity_category_comparer([NREN], {k: None for k in
@@ -63,6 +67,18 @@ class TestEntityCategoryVerifier:
         assert Counter(diff.extra_attributes) == Counter(
             ['displayname', 'edupersonscopedaffiliation', 'edupersonprincipalname',
              'schachomeorganization', 'mail'])
+        assert diff.status == EntityCategoryTestStatus.too_many
+
+    def test_missing_and_extra_attributes_coc(self):
+        diff = self.entity_category_comparer([COC], {k: None for k in ['displayname',
+                                                                       'edupersonscopedaffiliation',
+                                                                       'edupersonprincipalname',
+                                                                       'sn', 'co', 'o'
+                                                                       ]})
+        assert Counter(diff.missing_attributes) == Counter(
+            ['edupersontargetedid', 'schachomeorganization', 'mail'])
+        assert Counter(diff.extra_attributes) == Counter(['sn', 'co', 'o'])
+        assert diff.status == EntityCategoryTestStatus.too_few_too_many
 
     def test_case_insensitive_compare_of_attribute_names(self):
         diff = self.entity_category_comparer([COC], {k: None for k in
@@ -72,3 +88,4 @@ class TestEntityCategoryVerifier:
                                                       'ScHaChoMEoRgAniZaTiOn', 'MAIL']})
 
         assert len(diff) == 0
+        assert diff.status == EntityCategoryTestStatus.ok
