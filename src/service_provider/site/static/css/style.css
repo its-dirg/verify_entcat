@@ -3,7 +3,6 @@ body {
 }
 
 p {
-    font-size: 60px;
     line-height: 1em;
 }
 
@@ -35,6 +34,10 @@ p {
 
 .status-too-few-too-many {
     background-color: #ff7f7f;
+}
+
+.border-below {
+    border-bottom: 1px solid rgba(200,200,200,1);
 }
 
 .border-between {
@@ -69,20 +72,12 @@ p {
     color: grey;
     position: relative;
     font-size: 15pt;
+    margin-left: 5px;
 }
 
 .accordion-toggle.collapsed:before {
     /* symbol for "collapsed" panels */
     content: "\e080";
-}
-
-.panel-body {
-    /* ensure symbol for expanding/collapsing accordion don't overflow into panel-body */
-    /*overflow: auto;*/
-}
-
-.panel-heading:hover {
-    cursor: pointer;
 }
 
 .panel-heading:hover h3 {
@@ -91,4 +86,11 @@ p {
 
 #accordion a {
     color: black;
+}
+
+#heading_instructions .accordion-toggle:before {
+    font-size: 11pt;
+    margin-right: 5px;
+    margin-left: -10px;
+    padding: 0px
 }
