@@ -46,9 +46,7 @@ class EntityCategoryComparison:
         self.policy = attribute_release_policy
 
     def __call__(self, entity_categories, attributes):
-        expected_attributes = self.policy.get("entity_categories", None,
-                                              post_func=self.expected_attributes_for_entity_categories,
-                                              entity_categories=entity_categories)
+        expected_attributes = get_expected_attributes(self.policy, entity_categories)
         lowercase_attribute_names = [k.lower() for k in attributes.keys()]
 
         missing = []
@@ -62,7 +60,9 @@ class EntityCategoryComparison:
                 extra.append(key)
         return EntityCategoryTestResult(missing, extra)
 
-    def expected_attributes_for_entity_categories(self, ec_maps, entity_categories, **kwargs):
+
+def get_expected_attributes(attribute_release_policy, entity_categories):
+    def expected_attributes_for_entity_categories(ec_maps, entity_categories, **kwargs):
         entity_categories_set = set(entity_categories)
         expected_attributes = set()
         for ec_map in ec_maps:
@@ -74,3 +74,7 @@ class EntityCategoryComparison:
                     expected_attributes.update(released_attributes)
 
         return expected_attributes
+
+    return attribute_release_policy.get("entity_categories", None,
+                                        post_func=expected_attributes_for_entity_categories,
+                                        entity_categories=entity_categories)
