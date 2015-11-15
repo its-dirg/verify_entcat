@@ -180,6 +180,5 @@ class TestACS:
                                                    authn={"class_ref": PASSWORD})
         saml_response = base64.b64encode(str(authn_response).encode("utf-8"))
         self.sp.allow_unsolicited = True
-        session = {}
-        self.acs.do(self.sp, saml_response, None, "r_s", session)
-        assert session["r_s"].missing_attributes == set(["edupersontargetedid"])
+        test_result = self.acs.do(self.sp, saml_response, None, "r_s")
+        assert test_result.missing_attributes == set(["edupersontargetedid"])

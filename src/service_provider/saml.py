@@ -71,7 +71,7 @@ class ACS(ServiceProviderRequestHandler):
     def __init__(self, attribute_release_policy):
         self.entity_category_comparison = EntityCategoryComparison(attribute_release_policy)
 
-    def do(self, sp, auth_response, relay_state, test_id, session):
+    def do(self, sp, auth_response, relay_state, test_id):
         # TODO verify relay_state
 
         # parse response
@@ -99,5 +99,4 @@ class ACS(ServiceProviderRequestHandler):
         # TODO store/update result in database
         # TODO render test list with test marked as run with status
 
-        session[test_id] = attribute_diff
-        return Response("{}: {}".format(test_id, attribute_diff))
+        return attribute_diff
