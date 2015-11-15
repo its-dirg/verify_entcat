@@ -69,6 +69,10 @@ class ACS(ServiceProviderRequestHandler):
         # parse response
         try:
             saml_response = sp.parse_authn_request_response(auth_response, BINDING_HTTP_POST)
+            if not saml_response:
+                message = "Could not parse authn response from IdP: {}".format(auth_response)
+                logger.error(message)
+                raise ServiceProviderRequestHandlerError(message)
         except Exception as e:
             message = "{}: {}".format(type(e).__name__, str(e))
             logger.error("%s: %s", type(e).__name__, str(e))

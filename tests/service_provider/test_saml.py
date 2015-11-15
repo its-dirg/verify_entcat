@@ -202,3 +202,8 @@ class TestACS:
         saml_response = base64.b64encode((str(authn_response) + "</broken>").encode("utf-8"))
         with pytest.raises(ServiceProviderRequestHandlerError):
             self.acs.parse_authn_response(self.sp, saml_response, "r_s")
+
+    def test_raises_exception_for_broken_response_from_idp(self):
+        saml_response = b"abcdef"
+        with pytest.raises(ServiceProviderRequestHandlerError):
+            self.acs.parse_authn_response(self.sp, saml_response, "r_s")
