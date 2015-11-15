@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class ServiceProviderRequestHandler:
-    def do(self, sp, *args, **kwargs):
-        raise NotImplementedError()
+    pass
 
 
 class SSO(ServiceProviderRequestHandler):
@@ -29,13 +28,13 @@ class SSO(ServiceProviderRequestHandler):
         else:
             self.bindings = [BINDING_HTTP_POST, BINDING_HTTP_REDIRECT]
 
-    def do(self, sp):
+    def do_authn(self, sp):
         if self.idp_entity_id:
-            return self._make_auth_request(sp, self.idp_entity_id, {})
+            return self.make_authn_request(sp, self.idp_entity_id, {})
         elif self.discovery_service_url:
-            return self._redirect_to_discovery_service(sp, self.discovery_service_url)
+            return self.redirect_to_discovery_service(sp, self.discovery_service_url)
 
-    def _make_auth_request(self, sp, idp_entity_id, session):
+    def make_authn_request(self, sp, idp_entity_id, session):
         request_binding, destination = sp.pick_binding("single_sign_on_service", self.bindings,
                                                        entity_id=idp_entity_id)
         logger.debug("binding: %s, destination: %s", request_binding, destination)
@@ -58,7 +57,7 @@ class SSO(ServiceProviderRequestHandler):
 
         return ServiceError("Could not construct authentication request to IdP.")
 
-    def _redirect_to_discovery_service(self, sp, discover_service_url):
+    def redirect_to_discovery_service(self, sp, discover_service_url):
         return_to = sp.config.getattr("endpoints", "sp")["discovery_response"][0][0]
         redirect_url = sp.create_discovery_service_request(self.discovery_service_url,
                                                            sp.config.entityid,
@@ -71,7 +70,7 @@ class ACS(ServiceProviderRequestHandler):
     def __init__(self, attribute_release_policy):
         self.entity_category_comparison = EntityCategoryComparison(attribute_release_policy)
 
-    def do(self, sp, auth_response, relay_state, test_id):
+    def parse_authn_response(self, sp, auth_response, relay_state, test_id):
         # TODO verify relay_state
 
         # parse response

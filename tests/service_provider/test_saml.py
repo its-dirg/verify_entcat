@@ -119,7 +119,7 @@ class TestSSO:
 
     def test_automatically_select_idp_by_entity_id(self):
         sso_handler = SSO(idp_entity_id="https://idp.example.com")
-        auth_req = sso_handler.do(self.sp)
+        auth_req = sso_handler.do_authn(self.sp)
 
         verify_post_binding_request(self.sp.metadata, auth_req)
 
@@ -137,14 +137,14 @@ class TestSSO:
         sso_handler = SSO(idp_entity_id="https://idp.example.com")
 
         monkeypatch.setattr(self.sp, "metadata", metadata_mock)
-        auth_req = sso_handler.do(self.sp)
+        auth_req = sso_handler.do_authn(self.sp)
         monkeypatch.undo()
 
         custom_assert(self.sp.metadata, auth_req)
 
     def test_redirect_to_discovery_service(self):
         sso_handler = SSO(discovery_service_url="https://disco.example.com")
-        disco_req = sso_handler.do(self.sp)
+        disco_req = sso_handler.do_authn(self.sp)
         verify_discovery_service_request(self.sp.config, "https://disco.example.com", disco_req)
 
     def test_rejects_both_entityid_and_disco_url(self):
@@ -180,5 +180,5 @@ class TestACS:
                                                    authn={"class_ref": PASSWORD})
         saml_response = base64.b64encode(str(authn_response).encode("utf-8"))
         self.sp.allow_unsolicited = True
-        test_result = self.acs.do(self.sp, saml_response, None, "r_s")
+        test_result = self.acs.parse_authn_response(self.sp, saml_response, None, "r_s")
         assert test_result.missing_attributes == set(["edupersontargetedid"])
