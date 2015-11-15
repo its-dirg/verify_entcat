@@ -36,7 +36,6 @@ def verify_redirect_binding_request(metadata, auth_request):
 
     request_parameters = parse_qs(redirect_request.query)
     assert "SAMLRequest" in request_parameters
-    assert "RelayState" in request_parameters
 
 
 def verify_post_binding_request(metadata, auth_request):
@@ -51,7 +50,6 @@ def verify_post_binding_request(metadata, auth_request):
     assert form.action == "{}://{}{}".format(post_endpoint.scheme, post_endpoint.netloc,
                                              post_endpoint.path)
     assert "SAMLRequest" in form.fields
-    assert "RelayState" in form.fields
 
 
 def verify_discovery_service_request(sp_config, discovery_service_url, disco_request):
@@ -180,5 +178,5 @@ class TestACS:
                                                    authn={"class_ref": PASSWORD})
         saml_response = base64.b64encode(str(authn_response).encode("utf-8"))
         self.sp.allow_unsolicited = True
-        test_result = self.acs.parse_authn_response(self.sp, saml_response, None, "r_s")
+        test_result = self.acs.parse_authn_response(self.sp, saml_response, "r_s")
         assert test_result.missing_attributes == set(["edupersontargetedid"])

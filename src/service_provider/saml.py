@@ -30,21 +30,19 @@ class SSO(ServiceProviderRequestHandler):
 
     def do_authn(self, sp):
         if self.idp_entity_id:
-            return self.make_authn_request(sp, self.idp_entity_id, {})
+            return self.make_authn_request(sp, self.idp_entity_id)
         elif self.discovery_service_url:
             return self.redirect_to_discovery_service(sp, self.discovery_service_url)
 
-    def make_authn_request(self, sp, idp_entity_id, session):
+    def make_authn_request(self, sp, idp_entity_id):
         request_binding, destination = sp.pick_binding("single_sign_on_service", self.bindings,
                                                        entity_id=idp_entity_id)
         logger.debug("binding: %s, destination: %s", request_binding, destination)
 
         id, req = sp.create_authn_request(destination)
 
-        relay_state = rndstr()
-        session["relay_state"] = relay_state
         ht_args = dict(
-            sp.apply_binding(request_binding, str(req), destination, relay_state=relay_state))
+            sp.apply_binding(request_binding, str(req), destination))
 
         if request_binding == BINDING_HTTP_REDIRECT:
             headers = dict(ht_args["headers"])
@@ -70,9 +68,7 @@ class ACS(ServiceProviderRequestHandler):
     def __init__(self, attribute_release_policy):
         self.entity_category_comparison = EntityCategoryComparison(attribute_release_policy)
 
-    def parse_authn_response(self, sp, auth_response, relay_state, test_id):
-        # TODO verify relay_state
-
+    def parse_authn_response(self, sp, auth_response, test_id):
         # parse response
         try:
             saml_response = sp.parse_authn_request_response(auth_response, BINDING_HTTP_POST)
