@@ -17,6 +17,7 @@ from saml2.metadata import entity_descriptor
 from saml2.saml import NameID, NAMEID_FORMAT_TRANSIENT
 
 from service_provider.saml import SSO, ACS
+from service_provider.saml import ServiceProviderRequestHandlerError
 
 SP_BASE = "https://verify_entcat.example.com"
 
@@ -180,3 +181,24 @@ class TestACS:
         self.sp.allow_unsolicited = True
         test_result = self.acs.parse_authn_response(self.sp, saml_response, "r_s")
         assert test_result.missing_attributes == set(["edupersontargetedid"])
+
+    def test_raises_exception_for_broken_response_xml_from_idp(self, sp_metadata):
+        idp = server.Server(config=IdPConfig().load({"metadata": {"inline": [sp_metadata]}}))
+
+        authn_response = idp.create_authn_response({"eduPersonPrincipalName": None,
+                                                    "eduPersonScopedAffiliation": None,
+                                                    "mail": None,
+                                                    "givenName": None, "sn": None,
+                                                    "displayName": None},
+                                                   in_response_to=None, destination=None,
+                                                   sp_entity_id=self.sp.config.entityid,
+                                                   issuer="https://idp.example.com",
+                                                   name_id=NameID(format=NAMEID_FORMAT_TRANSIENT,
+                                                                  sp_name_qualifier=None,
+                                                                  name_qualifier=None,
+                                                                  text="Tester"),
+                                                   authn={"class_ref": PASSWORD})
+
+        saml_response = base64.b64encode((str(authn_response) + "</broken>").encode("utf-8"))
+        with pytest.raises(ServiceProviderRequestHandlerError):
+            self.acs.parse_authn_response(self.sp, saml_response, "r_s")

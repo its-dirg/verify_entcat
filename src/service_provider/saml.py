@@ -1,7 +1,7 @@
 import logging
 
 from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
-from saml2.httputil import SeeOther, ServiceError, Response
+from saml2.httputil import SeeOther, Response
 
 from entity_category_compare.ec_compare import EntityCategoryComparison
 
@@ -9,6 +9,10 @@ logger = logging.getLogger(__name__)
 
 
 class ServiceProviderRequestHandler:
+    pass
+
+
+class ServiceProviderRequestHandlerError(Exception):
     pass
 
 
@@ -68,8 +72,7 @@ class ACS(ServiceProviderRequestHandler):
         except Exception as e:
             message = "{}: {}".format(type(e).__name__, str(e))
             logger.error("%s: %s", type(e).__name__, str(e))
-            resp = ServiceError(message)
-            return resp
+            raise ServiceProviderRequestHandlerError(message)
 
         logger.debug("SAML Response: %s", saml_response)
         logger.debug("AVA: %s" % saml_response.ava)
