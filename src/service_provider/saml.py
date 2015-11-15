@@ -2,8 +2,6 @@ import logging
 
 from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
 from saml2.httputil import SeeOther, ServiceError, Response
-from saml2.response import StatusError
-from saml2.s_utils import rndstr
 
 from entity_category_compare.ec_compare import EntityCategoryComparison
 
@@ -46,14 +44,9 @@ class SSO(ServiceProviderRequestHandler):
 
         if request_binding == BINDING_HTTP_REDIRECT:
             headers = dict(ht_args["headers"])
-            try:
-                return SeeOther(headers["Location"])
-            except KeyError:
-                return ServiceError("Could not determine IdP HTTP-Redirect SSO Location.")
-        elif request_binding == BINDING_HTTP_POST:
+            return SeeOther(headers["Location"])
+        else:  # request_binding == BINDING_HTTP_POST:
             return Response(ht_args["data"], headers=ht_args["headers"])
-
-        return ServiceError("Could not construct authentication request to IdP.")
 
     def redirect_to_discovery_service(self, sp, discover_service_url):
         return_to = sp.config.getattr("endpoints", "sp")["discovery_response"][0][0]
@@ -72,9 +65,6 @@ class ACS(ServiceProviderRequestHandler):
         # parse response
         try:
             saml_response = sp.parse_authn_request_response(auth_response, BINDING_HTTP_POST)
-        except StatusError as e:
-            resp = ServiceError("Error from the IdP: {}".format(e))
-            return resp
         except Exception as e:
             message = "{}: {}".format(type(e).__name__, str(e))
             logger.error("%s: %s", type(e).__name__, str(e))
