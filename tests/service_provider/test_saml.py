@@ -13,7 +13,6 @@ from saml2.entity_category.refeds import RESEARCH_AND_SCHOLARSHIP
 from saml2.extension.idpdisc import BINDING_DISCO
 from saml2.mdstore import MetaDataMDX, SAML_METADATA_CONTENT_TYPE
 from saml2.metadata import entity_descriptor
-from saml2.s_utils import sid
 from saml2.saml import NameID, NAMEID_FORMAT_TRANSIENT
 
 from service_provider.saml import SSO, ACS, RequestCache, DS
@@ -24,33 +23,6 @@ SP_BASE = "https://verify_entcat.example.com"
 
 def full_path(filename):
     return os.path.join(os.path.abspath(os.path.dirname(__file__)), filename)
-
-
-def verify_redirect_binding_request(metadata, auth_request):
-    redirect_endpoint = urlparse(
-        metadata.single_sign_on_service("https://idp.example.com", BINDING_HTTP_REDIRECT)[0][
-            "location"])
-    redirect_request = urlparse(auth_request.message)
-
-    assert redirect_request.netloc == redirect_endpoint.netloc
-    assert redirect_request.path == redirect_endpoint.path
-
-    request_parameters = parse_qs(redirect_request.query)
-    assert "SAMLRequest" in request_parameters
-
-
-def verify_discovery_service_request(sp_config, discovery_service_url, disco_request):
-    entity_id = sp_config.entityid
-    discovery_response_endpoint = sp_config._sp_endpoints["discovery_response"][0][0]
-    discovery_url = urlparse(discovery_service_url)
-
-    redirect_request = urlparse(disco_request.message)
-    assert (redirect_request.scheme, redirect_request.netloc, redirect_request.path) == (
-        discovery_url.scheme, discovery_url.netloc, discovery_url.path)
-
-    request_parameters = dict(parse_qsl(redirect_request.query))
-    assert request_parameters["entityID"] == entity_id
-    assert request_parameters["return"] == discovery_response_endpoint
 
 
 @pytest.yield_fixture(scope="session")
@@ -111,11 +83,23 @@ class TestSSO:
     def setup(self, sp_instance):
         self.sp = sp_instance
 
+    def verify_redirect_binding_request(self, metadata, auth_request):
+        redirect_endpoint = urlparse(
+            metadata.single_sign_on_service("https://idp.example.com", BINDING_HTTP_REDIRECT)[0][
+                "location"])
+        redirect_request = urlparse(auth_request.message)
+
+        assert redirect_request.netloc == redirect_endpoint.netloc
+        assert redirect_request.path == redirect_endpoint.path
+
+        request_parameters = parse_qs(redirect_request.query)
+        assert "SAMLRequest" in request_parameters
+
     def test_make_authn_req(self):
         sso_handler = SSO(RequestCache())
         auth_req = sso_handler.make_authn_request(self.sp, "https://idp.example.com",
                                                   "https://myservice.example.com")
-        verify_redirect_binding_request(self.sp.metadata, auth_req)
+        self.verify_redirect_binding_request(self.sp.metadata, auth_req)
 
     def test_rejects_idp_without_redirect_binding_sso_location(self):
         sso_handler = SSO(RequestCache())
@@ -196,7 +180,7 @@ class TestACS:
             self.acs.parse_authn_response(self.sp, saml_response, "r_s")
 
     def test_removes_answered_message_id(self, idp_instance):
-        message_id = sid()
+        message_id = "abcdef"
         request_cache = RequestCache()
         request_cache[message_id] = None  # insert fake message in request cache shared with ACS
 
@@ -221,7 +205,48 @@ class TestACS:
 
 
 class TestDS:
-    def test_redirect_to_discovery_service(self, sp_instance):
-        ds_handler = DS()
-        disco_req = ds_handler.redirect_to_discovery_service(sp_instance, "https://disco.example.com")
-        verify_discovery_service_request(sp_instance.config, "https://disco.example.com", disco_req)
+    @pytest.fixture(autouse=True)
+    def setup(self, sp_instance):
+        self.sp = sp_instance
+
+    def verify_discovery_service_request(self, sp_config, discovery_service_url, disco_request):
+        entity_id = sp_config.entityid
+        discovery_response_endpoint = sp_config._sp_endpoints["discovery_response"][0][0]
+        discovery_url = urlparse(discovery_service_url)
+
+        redirect_request = urlparse(disco_request.message)
+        assert (redirect_request.scheme, redirect_request.netloc, redirect_request.path) == (
+            discovery_url.scheme, discovery_url.netloc, discovery_url.path)
+
+        request_parameters = dict(parse_qsl(redirect_request.query))
+        assert request_parameters["entityID"] == entity_id
+        assert request_parameters["return"].startswith(discovery_response_endpoint)
+
+    def test_redirect_to_discovery_service(self):
+        ds_handler = DS(RequestCache())
+        disco_req = ds_handler.redirect_to_discovery_service(self.sp, "https://disco.example.com",
+                                                             "https://myservice.example.com")
+        self.verify_discovery_service_request(self.sp.config, "https://disco.example.com",
+                                              disco_req)
+
+    def test_stores_requesting_origin(self):
+        request_cache = RequestCache()
+        ds_handler = DS(request_cache)
+        ds_handler.redirect_to_discovery_service(self.sp, "https://disco.example.com",
+                                                 "https://myservice.example.com")
+
+        assert len(request_cache) == 1
+        assert list(request_cache.values())[0] == "https://myservice.example.com"
+
+    def test_removes_session_id_when_answered(self):
+        session_id = "abcdef"
+        request_cache = RequestCache()
+        request_cache[session_id] = "https://myservice.example.com"
+        ds_handler = DS(request_cache)
+
+        response_params = {"entityID": "https://idp.example.com", "sid": session_id}
+        idp_entity_id, requesting_origin = ds_handler.parse_discovery_response(response_params)
+
+        assert idp_entity_id == "https://idp.example.com"
+        assert requesting_origin == "https://myservice.example.com"
+        assert session_id not in request_cache

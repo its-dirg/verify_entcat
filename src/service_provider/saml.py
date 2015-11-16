@@ -1,8 +1,10 @@
 import logging
+from urllib.parse import urlencode
 
 from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
 from saml2.assertion import Policy
 from saml2.httputil import SeeOther
+from saml2.s_utils import sid
 
 from entity_category_compare.ec_compare import EntityCategoryComparison
 
@@ -88,14 +90,28 @@ class ACS(ServiceProviderRequestHandler):
 
 
 class DS:
-    def redirect_to_discovery_service(self, sp, discovery_service_url):
-        return_to = sp.config.getattr("endpoints", "sp")["discovery_response"][0][0]
+    def __init__(self, outstanding_messages):
+        self.outstanding_messages = outstanding_messages
+
+    def redirect_to_discovery_service(self, sp, discovery_service_url, requesting_origin):
+        session_id = sid()
+        self.outstanding_messages[session_id] = requesting_origin
+
+        url = sp.config.getattr("endpoints", "sp")["discovery_response"][0][0]
+        return_to = "{url}?{query}".format(url=url, query=urlencode(({"sid": session_id})))
         redirect_url = sp.create_discovery_service_request(discovery_service_url,
                                                            sp.config.entityid,
                                                            **{"return": return_to})
-        logger.debug("Redirect to Discovery Service function: %s", redirect_url)
+        logger.debug("Redirect to Discovery Service: %s", redirect_url)
         return SeeOther(redirect_url)
 
+    def parse_discovery_response(self, response_params):
+        idp_entity_id = response_params["entityID"]
+        session_id = response_params["sid"]
+        requesting_origin = self.outstanding_messages[session_id]
+
+        del self.outstanding_messages[session_id]
+        return idp_entity_id, requesting_origin
 
 class RequestCache(dict):
     pass
