@@ -15,8 +15,8 @@ from saml2.mdstore import MetaDataMDX, SAML_METADATA_CONTENT_TYPE
 from saml2.metadata import entity_descriptor
 from saml2.saml import NameID, NAMEID_FORMAT_TRANSIENT
 
-from service_provider.saml import SSO, ACS, RequestCache, DS
-from service_provider.saml import ServiceProviderRequestHandlerError
+from verify_entcat.saml import SSO, ACS, RequestCache, DS
+from verify_entcat.saml import ServiceProviderRequestHandlerError
 
 SP_BASE = "https://verify_entcat.example.com"
 

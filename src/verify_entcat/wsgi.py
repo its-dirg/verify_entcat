@@ -6,8 +6,8 @@ from flask import Flask
 from flask.templating import render_template
 from saml2.httputil import geturl
 
-from service_provider.configure import build_test_list, create_service_providers
-from service_provider.saml import SSO, ACS, DS, RequestCache, ATTRIBUTE_RELEASE_POLICY
+from verify_entcat.configure import build_test_list, create_service_providers
+from verify_entcat.saml import SSO, ACS, DS, RequestCache, ATTRIBUTE_RELEASE_POLICY
 
 
 def read_config():

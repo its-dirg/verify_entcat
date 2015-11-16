@@ -6,7 +6,7 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     package_data={
-        'service_provider': [
+        'verify_entcat': [
             'templates/*.html',
             'site/static/*'
         ]

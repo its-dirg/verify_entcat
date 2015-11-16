@@ -6,7 +6,7 @@ from saml2.assertion import Policy
 from saml2.httputil import SeeOther
 from saml2.s_utils import sid
 
-from entity_category_compare.ec_compare import EntityCategoryComparison
+from verify_entcat.ec_compare import EntityCategoryComparison
 
 logger = logging.getLogger(__name__)
 ATTRIBUTE_RELEASE_POLICY = Policy({"default": {"entity_categories": ["refeds", "edugain"]}})

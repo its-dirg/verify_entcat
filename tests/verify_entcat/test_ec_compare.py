@@ -6,7 +6,7 @@ from saml2.entity_category.edugain import COC
 from saml2.entity_category.refeds import RESEARCH_AND_SCHOLARSHIP
 from saml2.entity_category.swamid import NREN, RESEARCH_AND_EDUCATION, EU, HEI, SFS_1993_1153
 
-from entity_category_compare.ec_compare import EntityCategoryComparison, EntityCategoryTestStatus
+from verify_entcat.ec_compare import EntityCategoryComparison, EntityCategoryTestStatus
 
 
 class TestEntityCategoryVerifier:
