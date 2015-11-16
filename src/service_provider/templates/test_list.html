@@ -155,10 +155,20 @@
                         </div>
 
                         <div class="col-md-6">
-                            {% for description in test_info.descriptions %}
-                                <h4>{{ description.title }}</h4>
-                                {{ description.text }}
-                            {% endfor %}
+                            <p>
+                                {% for description in test_info.descriptions %}
+                                    <h4>{{ description.title }}</h4>
+                                    {{ description.text }}
+                                {% endfor %}
+                            </p>
+                            <p>
+                                <strong>This category should return the attributes:</strong>
+                                <ul>
+                                    {% for attribute in test_info.expected_attributes %}
+                                        <li>{{ attribute }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </p>
                         </div>
                     </div>
                 </div>
