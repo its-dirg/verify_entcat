@@ -37,13 +37,12 @@ class SSO(ServiceProviderRequestHandler):
         logger.debug("'%s' SSO location: %s", idp_entity_id, destination)
 
         id, req = sp.create_authn_request(destination)
-
         ht_args = sp.apply_binding(BINDING_HTTP_REDIRECT, str(req), destination)
-
         headers = dict(ht_args["headers"])
+
         return SeeOther(headers["Location"])
 
-    def redirect_to_discovery_service(self, sp, discover_service_url):
+    def redirect_to_discovery_service(self, sp):
         return_to = sp.config.getattr("endpoints", "sp")["discovery_response"][0][0]
         redirect_url = sp.create_discovery_service_request(self.discovery_service_url,
                                                            sp.config.entityid,
@@ -88,11 +87,7 @@ class ACS(ServiceProviderRequestHandler):
         attribute_diff = self.entity_category_comparison(sp.config.entity_category,
                                                          saml_response.ava)
 
-        # TODO simplify fetching of entity id
         _resp = saml_response.response
         logger.info(">%s>%s> %s", _resp.issuer.text, sp.config.entityid, attribute_diff)
-
-        # TODO store/update result in database
-        # TODO render test list with test marked as run with status
 
         return attribute_diff
