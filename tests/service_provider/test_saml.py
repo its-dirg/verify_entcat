@@ -6,7 +6,6 @@ from urllib.parse import urlparse, parse_qsl, quote_plus, parse_qs
 import pytest
 import responses
 from saml2 import server, BINDING_HTTP_POST, BINDING_HTTP_REDIRECT
-from saml2.assertion import Policy
 from saml2.authn_context import PASSWORD
 from saml2.client import Saml2Client
 from saml2.config import SPConfig, IdPConfig
@@ -14,9 +13,10 @@ from saml2.entity_category.refeds import RESEARCH_AND_SCHOLARSHIP
 from saml2.extension.idpdisc import BINDING_DISCO
 from saml2.mdstore import MetaDataMDX, SAML_METADATA_CONTENT_TYPE
 from saml2.metadata import entity_descriptor
+from saml2.s_utils import sid
 from saml2.saml import NameID, NAMEID_FORMAT_TRANSIENT
 
-from service_provider.saml import SSO, ACS
+from service_provider.saml import SSO, ACS, RequestCache
 from service_provider.saml import ServiceProviderRequestHandlerError
 
 SP_BASE = "https://verify_entcat.example.com"
@@ -98,32 +98,40 @@ def sp_instance(sp_config):
     return Saml2Client(config=sp_config)
 
 
+@pytest.fixture
+def idp_instance(sp_metadata):
+    return server.Server(config=IdPConfig().load({
+
+        "metadata": {"inline": [sp_metadata]}
+    }))
+
+
 class TestSSO:
     @pytest.fixture(autouse=True)
     def setup(self, sp_instance):
         self.sp = sp_instance
 
     def test_automatically_select_idp_by_entity_id(self):
-        sso_handler = SSO(idp_entity_id="https://idp.example.com")
-        auth_req = sso_handler.do_authn(self.sp)
+        sso_handler = SSO(RequestCache(), idp_entity_id="https://idp.example.com")
+        auth_req = sso_handler.do_authn(self.sp, "https://myservice.example.com")
 
         verify_redirect_binding_request(self.sp.metadata, auth_req)
 
     def test_automatically_redirect_to_discovery_service(self):
-        sso_handler = SSO(discovery_service_url="https://disco.example.com")
-        disco_req = sso_handler.do_authn(self.sp)
+        sso_handler = SSO(RequestCache(), discovery_service_url="https://disco.example.com")
+        disco_req = sso_handler.do_authn(self.sp, "https://myservice.example.com")
         verify_discovery_service_request(self.sp.config, "https://disco.example.com", disco_req)
 
     def test_rejects_both_entityid_and_disco_url(self):
         with pytest.raises(ValueError):
-            SSO(idp_entity_id="foo", discovery_service_url="bar")
+            SSO(RequestCache(), idp_entity_id="foo", discovery_service_url="bar")
 
     def test_rejects_no_entityid_or_disco_url(self):
         with pytest.raises(ValueError):
-            SSO()
+            SSO(RequestCache())
 
     def test_rejects_idp_without_redirect_binding_sso_location(self):
-        sso = SSO(idp_entity_id="https://idp.example.com")
+        sso_handler = SSO(RequestCache(), idp_entity_id="https://idp.example.com")
 
         sp = Saml2Client(SPConfig())
         metadata_mock = Mock()
@@ -131,14 +139,27 @@ class TestSSO:
         sp.metadata = metadata_mock
 
         with pytest.raises(ServiceProviderRequestHandlerError):
-            sso.get_sso_location_for_redirect_binding(sp, "https://idp.example.com")
+            sso_handler.get_sso_location_for_redirect_binding(sp, "https://idp.example.com")
+
+    def test_stores_outgoing_message_id(self, idp_instance):
+        request_cache = RequestCache()
+        request_origin = "https://someservice.example.com"
+
+        sso_handler = SSO(request_cache, idp_entity_id="https://idp.example.com")
+        auth_req = sso_handler.make_authn_request(self.sp, "https://idp.example.com", request_origin)
+
+        redirect_req = urlparse(auth_req.message)
+        request_parameters = parse_qs(redirect_req.query)
+        saml_req = request_parameters["SAMLRequest"][0]
+        parsed_req = idp_instance.parse_authn_request(saml_req)
+        assert request_cache[parsed_req.message.id] == request_origin
 
 
 class TestACS:
     @pytest.fixture(autouse=True)
     def setup(self, sp_instance):
         self.sp = sp_instance
-        self.acs = ACS(Policy({"default": {"entity_categories": ["refeds", "edugain"]}}))
+        self.acs = ACS(RequestCache())
 
     def test_get_result(self, sp_metadata):
         idp = server.Server(config=IdPConfig().load({"metadata": {"inline": [sp_metadata]}}))
@@ -161,22 +182,21 @@ class TestACS:
         test_result = self.acs.parse_authn_response(self.sp, saml_response, "r_s")
         assert test_result.missing_attributes == set(["edupersontargetedid"])
 
-    def test_raises_exception_for_broken_response_xml_from_idp(self, sp_metadata):
-        idp = server.Server(config=IdPConfig().load({"metadata": {"inline": [sp_metadata]}}))
-
-        authn_response = idp.create_authn_response({"eduPersonPrincipalName": None,
-                                                    "eduPersonScopedAffiliation": None,
-                                                    "mail": None,
-                                                    "givenName": None, "sn": None,
-                                                    "displayName": None},
-                                                   in_response_to=None, destination=None,
-                                                   sp_entity_id=self.sp.config.entityid,
-                                                   issuer="https://idp.example.com",
-                                                   name_id=NameID(format=NAMEID_FORMAT_TRANSIENT,
-                                                                  sp_name_qualifier=None,
-                                                                  name_qualifier=None,
-                                                                  text="Tester"),
-                                                   authn={"class_ref": PASSWORD})
+    def test_raises_exception_for_broken_response_xml_from_idp(self, idp_instance):
+        authn_response = idp_instance.create_authn_response({"eduPersonPrincipalName": None,
+                                                             "eduPersonScopedAffiliation": None,
+                                                             "mail": None,
+                                                             "givenName": None, "sn": None,
+                                                             "displayName": None},
+                                                            in_response_to=None, destination=None,
+                                                            sp_entity_id=self.sp.config.entityid,
+                                                            issuer="https://idp.example.com",
+                                                            name_id=NameID(
+                                                                format=NAMEID_FORMAT_TRANSIENT,
+                                                                sp_name_qualifier=None,
+                                                                name_qualifier=None,
+                                                                text="Tester"),
+                                                            authn={"class_ref": PASSWORD})
 
         saml_response = base64.b64encode((str(authn_response) + "</broken>").encode("utf-8"))
         with pytest.raises(ServiceProviderRequestHandlerError):
@@ -186,3 +206,27 @@ class TestACS:
         saml_response = b"abcdef"
         with pytest.raises(ServiceProviderRequestHandlerError):
             self.acs.parse_authn_response(self.sp, saml_response, "r_s")
+
+    def test_removes_answered_message_id(self, idp_instance):
+        message_id = sid()
+        request_cache = RequestCache()
+        request_cache[message_id] = None  # insert fake message in request cache shared with ACS
+
+        authn_response = idp_instance.create_authn_response({},
+                                                            in_response_to=message_id,
+                                                            destination=None,
+                                                            sp_entity_id=self.sp.config.entityid,
+                                                            issuer="https://idp.example.com",
+                                                            name_id=NameID(
+                                                                format=NAMEID_FORMAT_TRANSIENT,
+                                                                sp_name_qualifier=None,
+                                                                name_qualifier=None,
+                                                                text="Tester"),
+                                                            authn={"class_ref": PASSWORD})
+        saml_response = base64.b64encode(str(authn_response).encode("utf-8"))
+        self.sp.allow_unsolicited = True
+
+        acs = ACS(request_cache)
+        acs.parse_authn_response(self.sp, saml_response, "r_s")
+
+        assert message_id not in request_cache
