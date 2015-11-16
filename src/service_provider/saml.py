@@ -55,7 +55,7 @@ class ACS(ServiceProviderRequestHandler):
             Policy({"default": {"entity_categories": ["refeds", "edugain"]}})
         )
 
-    def parse_authn_response(self, sp, auth_response, test_id):
+    def parse_authn_response(self, sp, auth_response):
         # parse response
         try:
             saml_response = sp.parse_authn_request_response(auth_response, BINDING_HTTP_POST)

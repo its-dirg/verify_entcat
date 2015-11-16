@@ -151,7 +151,7 @@ class TestACS:
                                                    authn={"class_ref": PASSWORD})
         saml_response = base64.b64encode(str(authn_response).encode("utf-8"))
         self.sp.allow_unsolicited = True
-        test_result = self.acs.parse_authn_response(self.sp, saml_response, "r_s")
+        test_result = self.acs.parse_authn_response(self.sp, saml_response)
         assert test_result.missing_attributes == set(["edupersontargetedid"])
 
     def test_raises_exception_for_broken_response_xml_from_idp(self, idp_instance):
@@ -172,12 +172,12 @@ class TestACS:
 
         saml_response = base64.b64encode((str(authn_response) + "</broken>").encode("utf-8"))
         with pytest.raises(ServiceProviderRequestHandlerError):
-            self.acs.parse_authn_response(self.sp, saml_response, "r_s")
+            self.acs.parse_authn_response(self.sp, saml_response)
 
     def test_raises_exception_for_broken_response_from_idp(self):
         saml_response = b"abcdef"
         with pytest.raises(ServiceProviderRequestHandlerError):
-            self.acs.parse_authn_response(self.sp, saml_response, "r_s")
+            self.acs.parse_authn_response(self.sp, saml_response)
 
     def test_removes_answered_message_id(self, idp_instance):
         message_id = "abcdef"
@@ -199,7 +199,7 @@ class TestACS:
         self.sp.allow_unsolicited = True
 
         acs = ACS(request_cache)
-        acs.parse_authn_response(self.sp, saml_response, "r_s")
+        acs.parse_authn_response(self.sp, saml_response)
 
         assert message_id not in request_cache
 
