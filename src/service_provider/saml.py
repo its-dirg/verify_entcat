@@ -13,7 +13,8 @@ ATTRIBUTE_RELEASE_POLICY = Policy({"default": {"entity_categories": ["refeds", "
 
 
 class ServiceProviderRequestHandler:
-    pass
+    def __init__(self, outstanding_messages):
+        self.outstanding_messages = outstanding_messages
 
 
 class ServiceProviderRequestHandlerError(Exception):
@@ -21,9 +22,6 @@ class ServiceProviderRequestHandlerError(Exception):
 
 
 class SSO(ServiceProviderRequestHandler):
-    def __init__(self, outstanding_messages):
-        self.outstanding_messages = outstanding_messages
-
     def make_authn_request(self, sp, idp_entity_id, request_origin):
         destination = self.get_sso_location_for_redirect_binding(sp, idp_entity_id)
         logger.debug("'%s' SSO location: %s", idp_entity_id, destination)
@@ -51,7 +49,7 @@ class SSO(ServiceProviderRequestHandler):
 
 class ACS(ServiceProviderRequestHandler):
     def __init__(self, outstanding_messages):
-        self.outstanding_messages = outstanding_messages
+        super().__init__(outstanding_messages)
         self.entity_category_comparison = EntityCategoryComparison(ATTRIBUTE_RELEASE_POLICY)
 
     def parse_authn_response(self, sp, auth_response):
@@ -89,10 +87,7 @@ class ACS(ServiceProviderRequestHandler):
         return attribute_diff
 
 
-class DS:
-    def __init__(self, outstanding_messages):
-        self.outstanding_messages = outstanding_messages
-
+class DS(ServiceProviderRequestHandler):
     def redirect_to_discovery_service(self, sp, discovery_service_url, request_origin):
         session_id = sid()
         self.outstanding_messages[session_id] = request_origin
