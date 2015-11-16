@@ -32,14 +32,6 @@ class SSO(ServiceProviderRequestHandler):
         headers = dict(ht_args["headers"])
         return SeeOther(headers["Location"])
 
-    def redirect_to_discovery_service(self, sp, discovery_service_url):
-        return_to = sp.config.getattr("endpoints", "sp")["discovery_response"][0][0]
-        redirect_url = sp.create_discovery_service_request(discovery_service_url,
-                                                           sp.config.entityid,
-                                                           **{"return": return_to})
-        logger.debug("Redirect to Discovery Service function: %s", redirect_url)
-        return SeeOther(redirect_url)
-
     def get_sso_location_for_redirect_binding(self, sp, idp_entity_id):
         # only use HTTP-Redirect binding per SAML2int
         sso_locations = sp.metadata.service(idp_entity_id, "idpsso_descriptor",
@@ -93,6 +85,16 @@ class ACS(ServiceProviderRequestHandler):
                     attribute_diff)
 
         return attribute_diff
+
+
+class DS:
+    def redirect_to_discovery_service(self, sp, discovery_service_url):
+        return_to = sp.config.getattr("endpoints", "sp")["discovery_response"][0][0]
+        redirect_url = sp.create_discovery_service_request(discovery_service_url,
+                                                           sp.config.entityid,
+                                                           **{"return": return_to})
+        logger.debug("Redirect to Discovery Service function: %s", redirect_url)
+        return SeeOther(redirect_url)
 
 
 class RequestCache(dict):

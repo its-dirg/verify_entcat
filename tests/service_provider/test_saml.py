@@ -16,7 +16,7 @@ from saml2.metadata import entity_descriptor
 from saml2.s_utils import sid
 from saml2.saml import NameID, NAMEID_FORMAT_TRANSIENT
 
-from service_provider.saml import SSO, ACS, RequestCache
+from service_provider.saml import SSO, ACS, RequestCache, DS
 from service_provider.saml import ServiceProviderRequestHandlerError
 
 SP_BASE = "https://verify_entcat.example.com"
@@ -116,11 +116,6 @@ class TestSSO:
         auth_req = sso_handler.make_authn_request(self.sp, "https://idp.example.com",
                                                   "https://myservice.example.com")
         verify_redirect_binding_request(self.sp.metadata, auth_req)
-
-    def test_redirect_to_discovery_service(self):
-        sso_handler = SSO(RequestCache())
-        disco_req = sso_handler.redirect_to_discovery_service(self.sp, "https://disco.example.com")
-        verify_discovery_service_request(self.sp.config, "https://disco.example.com", disco_req)
 
     def test_rejects_idp_without_redirect_binding_sso_location(self):
         sso_handler = SSO(RequestCache())
@@ -223,3 +218,10 @@ class TestACS:
         acs.parse_authn_response(self.sp, saml_response, "r_s")
 
         assert message_id not in request_cache
+
+
+class TestDS:
+    def test_redirect_to_discovery_service(self, sp_instance):
+        ds_handler = DS()
+        disco_req = ds_handler.redirect_to_discovery_service(sp_instance, "https://disco.example.com")
+        verify_discovery_service_request(sp_instance.config, "https://disco.example.com", disco_req)
