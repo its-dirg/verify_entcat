@@ -18,21 +18,8 @@ class ServiceProviderRequestHandlerError(Exception):
 
 
 class SSO(ServiceProviderRequestHandler):
-    def __init__(self, outstanding_messages, discovery_service_url=None, idp_entity_id=None):
-        if (idp_entity_id is None and discovery_service_url is None) or (
-                        idp_entity_id is not None and discovery_service_url is not None):
-            raise ValueError(
-                "Specify either a single IdP's entity id or the url to a discovery service.")
-
+    def __init__(self, outstanding_messages):
         self.outstanding_messages = outstanding_messages
-        self.idp_entity_id = idp_entity_id
-        self.discovery_service_url = discovery_service_url
-
-    def do_authn(self, sp, request_origin):
-        if self.idp_entity_id:
-            return self.make_authn_request(sp, self.idp_entity_id, request_origin)
-        elif self.discovery_service_url:
-            return self.redirect_to_discovery_service(sp, self.discovery_service_url)
 
     def make_authn_request(self, sp, idp_entity_id, request_origin):
         destination = self.get_sso_location_for_redirect_binding(sp, idp_entity_id)
@@ -47,7 +34,7 @@ class SSO(ServiceProviderRequestHandler):
 
     def redirect_to_discovery_service(self, sp, discovery_service_url):
         return_to = sp.config.getattr("endpoints", "sp")["discovery_response"][0][0]
-        redirect_url = sp.create_discovery_service_request(self.discovery_service_url,
+        redirect_url = sp.create_discovery_service_request(discovery_service_url,
                                                            sp.config.entityid,
                                                            **{"return": return_to})
         logger.debug("Redirect to Discovery Service function: %s", redirect_url)

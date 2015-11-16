@@ -111,27 +111,19 @@ class TestSSO:
     def setup(self, sp_instance):
         self.sp = sp_instance
 
-    def test_automatically_select_idp_by_entity_id(self):
-        sso_handler = SSO(RequestCache(), idp_entity_id="https://idp.example.com")
-        auth_req = sso_handler.do_authn(self.sp, "https://myservice.example.com")
-
+    def test_make_authn_req(self):
+        sso_handler = SSO(RequestCache())
+        auth_req = sso_handler.make_authn_request(self.sp, "https://idp.example.com",
+                                                  "https://myservice.example.com")
         verify_redirect_binding_request(self.sp.metadata, auth_req)
 
-    def test_automatically_redirect_to_discovery_service(self):
-        sso_handler = SSO(RequestCache(), discovery_service_url="https://disco.example.com")
-        disco_req = sso_handler.do_authn(self.sp, "https://myservice.example.com")
+    def test_redirect_to_discovery_service(self):
+        sso_handler = SSO(RequestCache())
+        disco_req = sso_handler.redirect_to_discovery_service(self.sp, "https://disco.example.com")
         verify_discovery_service_request(self.sp.config, "https://disco.example.com", disco_req)
 
-    def test_rejects_both_entityid_and_disco_url(self):
-        with pytest.raises(ValueError):
-            SSO(RequestCache(), idp_entity_id="foo", discovery_service_url="bar")
-
-    def test_rejects_no_entityid_or_disco_url(self):
-        with pytest.raises(ValueError):
-            SSO(RequestCache())
-
     def test_rejects_idp_without_redirect_binding_sso_location(self):
-        sso_handler = SSO(RequestCache(), idp_entity_id="https://idp.example.com")
+        sso_handler = SSO(RequestCache())
 
         sp = Saml2Client(SPConfig())
         metadata_mock = Mock()
@@ -145,8 +137,9 @@ class TestSSO:
         request_cache = RequestCache()
         request_origin = "https://someservice.example.com"
 
-        sso_handler = SSO(request_cache, idp_entity_id="https://idp.example.com")
-        auth_req = sso_handler.make_authn_request(self.sp, "https://idp.example.com", request_origin)
+        sso_handler = SSO(request_cache)
+        auth_req = sso_handler.make_authn_request(self.sp, "https://idp.example.com",
+                                                  request_origin)
 
         redirect_req = urlparse(auth_req.message)
         request_parameters = parse_qs(redirect_req.query)
