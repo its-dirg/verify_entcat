@@ -17,7 +17,7 @@ class ServiceProviderRequestHandlerError(Exception):
 
 
 class SSO(ServiceProviderRequestHandler):
-    def __init__(self, idp_entity_id=None, discovery_service_url=None):
+    def __init__(self, discovery_service_url=None, idp_entity_id=None):
         if (idp_entity_id is None and discovery_service_url is None) or (
                         idp_entity_id is not None and discovery_service_url is not None):
             raise ValueError(
