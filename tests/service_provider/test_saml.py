@@ -1,18 +1,18 @@
 import base64
-import functools
 import os
 from unittest.mock import Mock
-from urllib.parse import urlparse, parse_qs, parse_qsl
+from urllib.parse import urlparse, parse_qsl, quote_plus, parse_qs
 
 import pytest
-from lxml import html
-from saml2 import server, BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
+import responses
+from saml2 import server, BINDING_HTTP_POST, BINDING_HTTP_REDIRECT
 from saml2.assertion import Policy
 from saml2.authn_context import PASSWORD
 from saml2.client import Saml2Client
 from saml2.config import SPConfig, IdPConfig
 from saml2.entity_category.refeds import RESEARCH_AND_SCHOLARSHIP
 from saml2.extension.idpdisc import BINDING_DISCO
+from saml2.mdstore import MetaDataMDX, SAML_METADATA_CONTENT_TYPE
 from saml2.metadata import entity_descriptor
 from saml2.saml import NameID, NAMEID_FORMAT_TRANSIENT
 
@@ -39,20 +39,6 @@ def verify_redirect_binding_request(metadata, auth_request):
     assert "SAMLRequest" in request_parameters
 
 
-def verify_post_binding_request(metadata, auth_request):
-    post_endpoint = urlparse(
-        metadata.single_sign_on_service("https://idp.example.com", BINDING_HTTP_POST)[0][
-            "location"])
-
-    html_page = "".join(auth_request.message)
-    form_post = html.document_fromstring(html_page)
-    form = form_post.forms[0]
-
-    assert form.action == "{}://{}{}".format(post_endpoint.scheme, post_endpoint.netloc,
-                                             post_endpoint.path)
-    assert "SAMLRequest" in form.fields
-
-
 def verify_discovery_service_request(sp_config, discovery_service_url, disco_request):
     entity_id = sp_config.entityid
     discovery_response_endpoint = sp_config._sp_endpoints["discovery_response"][0][0]
@@ -67,14 +53,10 @@ def verify_discovery_service_request(sp_config, discovery_service_url, disco_req
     assert request_parameters["return"] == discovery_response_endpoint
 
 
-def single_sign_on_service_mock(sso_element, idp_entity_id, binding, descriptor_type):
-    return [sso_element] if binding == sso_element["binding"] else None
-
-
-@pytest.fixture(scope="session")
+@pytest.yield_fixture(scope="session")
 def sp_config():
     with open(full_path("test_idp.xml")) as f:
-        idp_xml = f.read()
+        idp_metadata = f.read()
 
     config = {
         "entityid": "{}/sp.xml".format(SP_BASE),
@@ -93,12 +75,17 @@ def sp_config():
                 }
             },
         },
-        "metadata": {
-            "inline": [idp_xml],
-        },
     }
 
-    return SPConfig().load(config)
+    conf = SPConfig().load(config)
+    conf.metadata = MetaDataMDX("http://mdx.example.com")
+
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        url = "http://mdx.example.com/entities/{}".format(
+            quote_plus(MetaDataMDX.sha1_entity_transform("https://idp.example.com")))
+        rsps.add(responses.GET, url, body=idp_metadata, status=200,
+                 content_type=SAML_METADATA_CONTENT_TYPE)
+        yield conf
 
 
 @pytest.fixture(scope="session")
@@ -120,28 +107,9 @@ class TestSSO:
         sso_handler = SSO(idp_entity_id="https://idp.example.com")
         auth_req = sso_handler.do_authn(self.sp)
 
-        verify_post_binding_request(self.sp.metadata, auth_req)
+        verify_redirect_binding_request(self.sp.metadata, auth_req)
 
-    @pytest.mark.parametrize("forced_binding, custom_assert", [
-        (BINDING_HTTP_POST, verify_post_binding_request),
-        (BINDING_HTTP_REDIRECT, verify_redirect_binding_request)
-    ])
-    def test_construct_auth_req_based_on_request_binding(self, forced_binding, custom_assert,
-                                                         monkeypatch):
-        metadata_mock = Mock()
-        metadata_mock.single_sign_on_service.side_effect = functools.partial(
-            single_sign_on_service_mock,
-            self.sp.metadata.single_sign_on_service("https://idp.example.com", forced_binding)[0])
-
-        sso_handler = SSO(idp_entity_id="https://idp.example.com")
-
-        monkeypatch.setattr(self.sp, "metadata", metadata_mock)
-        auth_req = sso_handler.do_authn(self.sp)
-        monkeypatch.undo()
-
-        custom_assert(self.sp.metadata, auth_req)
-
-    def test_redirect_to_discovery_service(self):
+    def test_automatically_redirect_to_discovery_service(self):
         sso_handler = SSO(discovery_service_url="https://disco.example.com")
         disco_req = sso_handler.do_authn(self.sp)
         verify_discovery_service_request(self.sp.config, "https://disco.example.com", disco_req)
@@ -153,6 +121,17 @@ class TestSSO:
     def test_rejects_no_entityid_or_disco_url(self):
         with pytest.raises(ValueError):
             SSO()
+
+    def test_rejects_idp_without_redirect_binding_sso_location(self):
+        sso = SSO(idp_entity_id="https://idp.example.com")
+
+        sp = Saml2Client(SPConfig())
+        metadata_mock = Mock()
+        metadata_mock.service.return_value = []
+        sp.metadata = metadata_mock
+
+        with pytest.raises(ServiceProviderRequestHandlerError):
+            sso.get_sso_location_for_redirect_binding(sp, "https://idp.example.com")
 
 
 class TestACS:

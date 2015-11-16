@@ -1,7 +1,7 @@
 import logging
 
 from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
-from saml2.httputil import SeeOther, Response
+from saml2.httputil import SeeOther
 
 from entity_category_compare.ec_compare import EntityCategoryComparison
 
@@ -17,7 +17,7 @@ class ServiceProviderRequestHandlerError(Exception):
 
 
 class SSO(ServiceProviderRequestHandler):
-    def __init__(self, idp_entity_id=None, discovery_service_url=None, bindings=None):
+    def __init__(self, idp_entity_id=None, discovery_service_url=None):
         if (idp_entity_id is None and discovery_service_url is None) or (
                         idp_entity_id is not None and discovery_service_url is not None):
             raise ValueError(
@@ -25,10 +25,6 @@ class SSO(ServiceProviderRequestHandler):
 
         self.idp_entity_id = idp_entity_id
         self.discovery_service_url = discovery_service_url
-        if bindings:
-            self.bindings = bindings
-        else:
-            self.bindings = [BINDING_HTTP_POST, BINDING_HTTP_REDIRECT]
 
     def do_authn(self, sp):
         if self.idp_entity_id:
@@ -37,20 +33,15 @@ class SSO(ServiceProviderRequestHandler):
             return self.redirect_to_discovery_service(sp, self.discovery_service_url)
 
     def make_authn_request(self, sp, idp_entity_id):
-        request_binding, destination = sp.pick_binding("single_sign_on_service", self.bindings,
-                                                       entity_id=idp_entity_id)
-        logger.debug("binding: %s, destination: %s", request_binding, destination)
+        destination = self.get_sso_location_for_redirect_binding(sp, idp_entity_id)
+        logger.debug("'%s' SSO location: %s", idp_entity_id, destination)
 
         id, req = sp.create_authn_request(destination)
 
-        ht_args = dict(
-            sp.apply_binding(request_binding, str(req), destination))
+        ht_args = sp.apply_binding(BINDING_HTTP_REDIRECT, str(req), destination)
 
-        if request_binding == BINDING_HTTP_REDIRECT:
-            headers = dict(ht_args["headers"])
-            return SeeOther(headers["Location"])
-        else:  # request_binding == BINDING_HTTP_POST:
-            return Response(ht_args["data"], headers=ht_args["headers"])
+        headers = dict(ht_args["headers"])
+        return SeeOther(headers["Location"])
 
     def redirect_to_discovery_service(self, sp, discover_service_url):
         return_to = sp.config.getattr("endpoints", "sp")["discovery_response"][0][0]
@@ -59,6 +50,19 @@ class SSO(ServiceProviderRequestHandler):
                                                            **{"return": return_to})
         logger.debug("Redirect to Discovery Service function: %s", redirect_url)
         return SeeOther(redirect_url)
+
+    def get_sso_location_for_redirect_binding(self, sp, idp_entity_id):
+        # only use HTTP-Redirect binding per SAML2int
+        sso_locations = sp.metadata.service(idp_entity_id, "idpsso_descriptor",
+                                            "single_sign_on_service", BINDING_HTTP_REDIRECT)
+
+        if sso_locations:
+            return sso_locations[0]["location"]
+        else:
+            logger.error("'{}' does not support HTTP-Redirect binding for SSO location.".format(
+                idp_entity_id))
+            raise ServiceProviderRequestHandlerError(
+                "IdP must support HTTP-Redirect binding for SSO location.")
 
 
 class ACS(ServiceProviderRequestHandler):
