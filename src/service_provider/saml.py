@@ -9,6 +9,7 @@ from saml2.s_utils import sid
 from entity_category_compare.ec_compare import EntityCategoryComparison
 
 logger = logging.getLogger(__name__)
+ATTRIBUTE_RELEASE_POLICY = Policy({"default": {"entity_categories": ["refeds", "edugain"]}})
 
 
 class ServiceProviderRequestHandler:
@@ -51,14 +52,13 @@ class SSO(ServiceProviderRequestHandler):
 class ACS(ServiceProviderRequestHandler):
     def __init__(self, outstanding_messages):
         self.outstanding_messages = outstanding_messages
-        self.entity_category_comparison = EntityCategoryComparison(
-            Policy({"default": {"entity_categories": ["refeds", "edugain"]}})
-        )
+        self.entity_category_comparison = EntityCategoryComparison(ATTRIBUTE_RELEASE_POLICY)
 
     def parse_authn_response(self, sp, auth_response):
         # parse response
         try:
-            saml_response = sp.parse_authn_request_response(auth_response, BINDING_HTTP_POST)
+            saml_response = sp.parse_authn_request_response(auth_response, BINDING_HTTP_POST,
+                                                            self.outstanding_messages)
         except Exception as e:
             message = "{}: {}".format(type(e).__name__, str(e))
             logger.error("%s: %s", type(e).__name__, str(e))
@@ -93,9 +93,9 @@ class DS:
     def __init__(self, outstanding_messages):
         self.outstanding_messages = outstanding_messages
 
-    def redirect_to_discovery_service(self, sp, discovery_service_url, requesting_origin):
+    def redirect_to_discovery_service(self, sp, discovery_service_url, request_origin):
         session_id = sid()
-        self.outstanding_messages[session_id] = requesting_origin
+        self.outstanding_messages[session_id] = request_origin
 
         url = sp.config.getattr("endpoints", "sp")["discovery_response"][0][0]
         return_to = "{url}?{query}".format(url=url, query=urlencode(({"sid": session_id})))
@@ -108,10 +108,11 @@ class DS:
     def parse_discovery_response(self, response_params):
         idp_entity_id = response_params["entityID"]
         session_id = response_params["sid"]
-        requesting_origin = self.outstanding_messages[session_id]
+        request_origin = self.outstanding_messages[session_id]
 
         del self.outstanding_messages[session_id]
-        return idp_entity_id, requesting_origin
+        return idp_entity_id, request_origin
+
 
 class RequestCache(dict):
     pass
