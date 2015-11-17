@@ -56,16 +56,9 @@
 
 <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
     {% for test_id, test_info in tests|dictsort %}
-        {% if test_id in test_results and test_results[test_id].status %}
-            {% set status_css_class, status_text =
-                {
-                   0: ('status-not-run', 'Not run'),
-                   1: ('status-ok', 'OK'),
-                   2: ('status-too-few', 'Too few'),
-                   3: ('status-too-many', 'Too many'),
-                   4: ('status-too-few-too-many', 'Too few & too many')
-                }[test_results[test_id].status]
-            %}
+        {% if test_id in test_results %}
+            {% set status_css_class = test_status.css_class(test_results[test_id].status.value) %}
+            {% set status_text = test_results[test_id].status.short_text %}
         {% else %}
             {% set status_css_class, status_text =  ('status-not-run', 'Not run') %}
         {% endif %}
@@ -82,7 +75,6 @@
                             </h3>
                         </a>
                         <div class="col-md-3">Status: {{ status_text }}</div>
-
                         <div class="col-md-2">
                             <button type="button" class="btn btn-sm btn-primary pull-right"
                                     onclick="runTest('{{ test_id }}');">Run test

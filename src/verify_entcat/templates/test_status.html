@@ -1,3 +1,18 @@
+{% macro css_class(status) %}
+
+{% set status_css_class =
+    {
+       1: 'status-ok',
+       2: 'status-too-few',
+       3: 'status-too-many',
+       4: 'status-too-few-too-many'
+    }[status]
+%}
+
+{{ status_css_class }}
+
+{% endmacro %}
+
 {% macro render() %}
 
 <div id="test_status">
