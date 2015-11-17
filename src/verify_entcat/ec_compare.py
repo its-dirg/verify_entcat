@@ -25,8 +25,8 @@ class EntityCategoryTestStatus:
 
 class EntityCategoryTestResult:
     def __init__(self, missing, extra, test_id=None):
-        self.missing_attributes = set(missing)
-        self.extra_attributes = set(extra)
+        self.missing_attributes = frozenset(missing)
+        self.extra_attributes = frozenset(extra)
         self.test_id = test_id
 
         if len(self) == 0:
@@ -39,7 +39,9 @@ class EntityCategoryTestResult:
             self.status = EntityCategoryTestStatus(EntityCategoryTestStatusEnum.too_many)
 
     def __eq__(self, other):
-        return self.missing_attributes == other.missing_attributes and self.extra_attributes == other.extra_attributes
+        return self.missing_attributes == other.missing_attributes and \
+               self.extra_attributes == other.extra_attributes and \
+               self.test_id == other.test_id
 
     def __len__(self):
         return len(self.missing_attributes) + len(self.extra_attributes)
@@ -47,6 +49,9 @@ class EntityCategoryTestResult:
     def __repr__(self):
         return "{}(missing={}, extra={})".format(type(self).__name__, self.missing_attributes,
                                                  self.extra_attributes)
+
+    def __hash__(self):
+        return hash((self.test_id, self.missing_attributes, self.extra_attributes))
 
 
 class EntityCategoryComparison:

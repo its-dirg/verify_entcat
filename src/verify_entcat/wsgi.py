@@ -115,8 +115,8 @@ def results_overview():
         if idp_entity_id not in results_overview:
             results_overview[idp_entity_id] = {}
 
-        result_entry = db[idp_entity_id]
-        results_overview[idp_entity_id][result_entry.test_id] = result_entry
+        for result_entry in db[idp_entity_id]:
+            results_overview[idp_entity_id][result_entry.test_id] = result_entry
 
     return render_template("results_overview.html", tests=app.config["TESTS"],
                            results_overview=results_overview)
