@@ -46,7 +46,7 @@ class TestEntityCategoryVerifier:
         diff = self.entity_category_comparer(entity_categories,
                                              {k: None for k in expected_attributes})
         assert len(diff) == 0
-        assert diff.status == EntityCategoryTestStatusEnum.ok
+        assert diff.status.value == EntityCategoryTestStatusEnum.ok
 
     def test_missing_attributes_coc(self):
         diff = self.entity_category_comparer([COC], {k: None for k in ['displayname',
@@ -55,7 +55,7 @@ class TestEntityCategoryVerifier:
                                                                        ]})
         assert Counter(diff.missing_attributes) == Counter(
             ['edupersontargetedid', 'schachomeorganization', 'mail'])
-        assert diff.status == EntityCategoryTestStatusEnum.too_few
+        assert diff.status.value == EntityCategoryTestStatusEnum.too_few
 
     def test_extra_attributes_nren(self):
         diff = self.entity_category_comparer([NREN], {k: None for k in
@@ -67,7 +67,7 @@ class TestEntityCategoryVerifier:
         assert Counter(diff.extra_attributes) == Counter(
             ['displayname', 'edupersonscopedaffiliation', 'edupersonprincipalname',
              'schachomeorganization', 'mail'])
-        assert diff.status == EntityCategoryTestStatusEnum.too_many
+        assert diff.status.value == EntityCategoryTestStatusEnum.too_many
 
     def test_missing_and_extra_attributes_coc(self):
         diff = self.entity_category_comparer([COC], {k: None for k in ['displayname',
@@ -78,7 +78,7 @@ class TestEntityCategoryVerifier:
         assert Counter(diff.missing_attributes) == Counter(
             ['edupersontargetedid', 'schachomeorganization', 'mail'])
         assert Counter(diff.extra_attributes) == Counter(['sn', 'co', 'o'])
-        assert diff.status == EntityCategoryTestStatusEnum.too_few_too_many
+        assert diff.status.value == EntityCategoryTestStatusEnum.too_few_too_many
 
     def test_case_insensitive_compare_of_attribute_names(self):
         diff = self.entity_category_comparer([COC], {k: None for k in
@@ -88,4 +88,4 @@ class TestEntityCategoryVerifier:
                                                       'ScHaChoMEoRgAniZaTiOn', 'MAIL']})
 
         assert len(diff) == 0
-        assert diff.status == EntityCategoryTestStatusEnum.ok
+        assert diff.status.value == EntityCategoryTestStatusEnum.ok
