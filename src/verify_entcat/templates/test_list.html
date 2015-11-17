@@ -43,7 +43,7 @@
                     </div>
                     <div class="col-md-6">
                         <span class="h3">Possible test status</span>
-                        {{ test_status.content() }}
+                        {{ test_status.render() }}
                     </div>
                 </div>
             </div>
@@ -123,7 +123,7 @@
                         </div>
 
                         <div class="col-md-6">
-                            {{ test_description.content(test_info) }}
+                            {{ test_description.render(test_info) }}
                         </div>
                     </div>
                 </div>
