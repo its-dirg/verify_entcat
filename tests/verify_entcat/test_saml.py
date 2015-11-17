@@ -133,10 +133,30 @@ class TestACS:
         self.sp = sp_instance
         self.acs = ACS(RequestCache())
 
-    def test_get_result(self, sp_metadata):
-        idp = server.Server(config=IdPConfig().load({"metadata": {"inline": [sp_metadata]}}))
+    def test_get_result(self, idp_instance):
+        authn_req_id = "abcdef"
+        self.acs.outstanding_messages[authn_req_id] = "https://myservice.example.com"
 
-        authn_response = idp.create_authn_response({"eduPersonPrincipalName": None,
+        authn_response = idp_instance.create_authn_response({"eduPersonPrincipalName": None,
+                                                    "eduPersonScopedAffiliation": None,
+                                                    "mail": None,
+                                                    "givenName": None, "sn": None,
+                                                    "displayName": None},
+                                                   in_response_to=authn_req_id, destination=None,
+                                                   sp_entity_id=self.sp.config.entityid,
+                                                   issuer="https://idp.example.com",
+                                                   name_id=NameID(format=NAMEID_FORMAT_TRANSIENT,
+                                                                  sp_name_qualifier=None,
+                                                                  name_qualifier=None,
+                                                                  text="Tester"),
+                                                   authn={"class_ref": PASSWORD})
+        saml_response = base64.b64encode(str(authn_response).encode("utf-8"))
+        idp_entity_id, test_result = self.acs.parse_authn_response(self.sp, saml_response)
+        assert idp_entity_id == "https://idp.example.com"
+        assert test_result.missing_attributes == set(["edupersontargetedid"])
+
+    def test_allows_unsolicited_response(self, idp_instance):
+        authn_response = idp_instance.create_authn_response({"eduPersonPrincipalName": None,
                                                     "eduPersonScopedAffiliation": None,
                                                     "mail": None,
                                                     "givenName": None, "sn": None,
@@ -150,6 +170,7 @@ class TestACS:
                                                                   text="Tester"),
                                                    authn={"class_ref": PASSWORD})
         saml_response = base64.b64encode(str(authn_response).encode("utf-8"))
+
         self.sp.allow_unsolicited = True
         idp_entity_id, test_result = self.acs.parse_authn_response(self.sp, saml_response)
         assert idp_entity_id == "https://idp.example.com"
@@ -183,7 +204,7 @@ class TestACS:
     def test_removes_answered_message_id(self, idp_instance):
         message_id = "abcdef"
         request_cache = RequestCache()
-        request_cache[message_id] = None  # insert fake message in request cache shared with ACS
+        request_cache[message_id] = "https://myservice.example.com"  # insert fake message in request cache shared with ACS
 
         authn_response = idp_instance.create_authn_response({},
                                                             in_response_to=message_id,
@@ -197,7 +218,6 @@ class TestACS:
                                                                 text="Tester"),
                                                             authn={"class_ref": PASSWORD})
         saml_response = base64.b64encode(str(authn_response).encode("utf-8"))
-        self.sp.allow_unsolicited = True
 
         acs = ACS(request_cache)
         acs.parse_authn_response(self.sp, saml_response)
