@@ -1,11 +1,26 @@
 from enum import IntEnum
 
 
-class EntityCategoryTestStatus(IntEnum):
+class EntityCategoryTestStatusEnum(IntEnum):
     ok = 1
     too_few = 2
     too_many = 3
     too_few_too_many = 4
+
+
+class EntityCategoryTestStatus:
+    def __init__(self, status):
+        self._status = status
+        self.short_text = {
+            EntityCategoryTestStatusEnum.ok: "OK",
+            EntityCategoryTestStatusEnum.too_few: "Too few",
+            EntityCategoryTestStatusEnum.too_many: "Too many",
+            EntityCategoryTestStatusEnum.too_few_too_many: "Too few & too many",
+        }[status]
+
+    @property
+    def value(self):
+        return self._status.value
 
 
 class EntityCategoryTestResult:
@@ -15,20 +30,13 @@ class EntityCategoryTestResult:
         self.test_id = test_id
 
         if len(self) == 0:
-            self.status = EntityCategoryTestStatus.ok
+            self.status = EntityCategoryTestStatus(EntityCategoryTestStatusEnum.ok)
         elif len(missing) > 0 and len(extra) > 0:
-            self.status = EntityCategoryTestStatus.too_few_too_many
+            self.status = EntityCategoryTestStatus(EntityCategoryTestStatusEnum.too_few_too_many)
         elif len(missing) > 0:
-            self.status = EntityCategoryTestStatus.too_few
+            self.status = EntityCategoryTestStatus(EntityCategoryTestStatusEnum.too_few)
         elif len(extra) > 0:
-            self.status = EntityCategoryTestStatus.too_many
-
-    def to_dict(self):
-        return {
-            "missing_attributes": list(self.missing_attributes),
-            "extra_attributes": list(self.extra_attributes),
-            "status": self.status
-        }
+            self.status = EntityCategoryTestStatus(EntityCategoryTestStatusEnum.too_many)
 
     def __eq__(self, other):
         return self.missing_attributes == other.missing_attributes and self.extra_attributes == other.extra_attributes

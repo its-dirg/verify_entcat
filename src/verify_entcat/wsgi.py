@@ -1,14 +1,23 @@
 import os
-
 import flask
 import yaml
+from beaker.middleware import SessionMiddleware
 from flask import Flask
 from flask.globals import g
+from flask.sessions import SessionInterface
 from flask.templating import render_template
-
 from verify_entcat.configure import build_test_list, create_service_providers
 from verify_entcat.result_db import ResultDB
 from verify_entcat.saml import SSO, ACS, DS, RequestCache, ATTRIBUTE_RELEASE_POLICY
+
+
+class BeakerSessionInterface(SessionInterface):
+    def open_session(self, app, request):
+        session = request.environ['beaker.session']
+        return session
+
+    def save_session(self, app, session, response):
+        session.save()
 
 
 def read_config():
@@ -31,10 +40,19 @@ app.config.update(dict(
     RESULT_DB=config["verify_entcat_conf"]["result_db"]
 ))
 
+session_opts = {
+    # TODO can't be server-side due to pyff redirecting to disco endpoint twice
+    "session.type": "cookie",
+    "session.validate_key": app.config["SECRET_KEY"]
+}
+
+app.wsgi_app = SessionMiddleware(app.wsgi_app, session_opts)
+app.session_interface = BeakerSessionInterface()
+
 
 def get_db():
     if not hasattr(g, 'result_db'):
-        g.result_db = ResultDB()
+        g.result_db = ResultDB(app.config["RESULT_DB"])
     return g.result_db
 
 
@@ -77,9 +95,10 @@ def acs(test_id):
 
     if "test_results" not in flask.session:
         flask.session["test_results"] = {}
-    flask.session["test_results"][test_id] = test_result.to_dict()
+    flask.session["test_results"][test_id] = test_result
 
     db = get_db()
+    test_result.test_id = test_id
     db[idp_entity_id] = test_result
 
     return render_template("test_list.html", tests=app.config["TESTS"],
