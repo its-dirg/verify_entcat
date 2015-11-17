@@ -9,9 +9,10 @@ class EntityCategoryTestStatus(IntEnum):
 
 
 class EntityCategoryTestResult:
-    def __init__(self, missing, extra):
+    def __init__(self, missing, extra, test_id=None):
         self.missing_attributes = set(missing)
         self.extra_attributes = set(extra)
+        self.test_id = test_id
 
         if len(self) == 0:
             self.status = EntityCategoryTestStatus.ok
