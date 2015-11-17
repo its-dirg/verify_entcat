@@ -14,3 +14,7 @@ class ResultDB:
     def __getitem__(self, idp_entity_id):
         with shelve.open(self.db_path, **self.db_params) as db:
             return db[idp_entity_id]
+
+    def __iter__(self):
+        with shelve.open(self.db_path, **self.db_params) as db:
+            return iter(list(db.keys()))
