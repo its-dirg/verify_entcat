@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% import "test_status.html" as test_status %}
 {% import "test_description.html" as test_description %}
+{% import "test_result.html" as test_result %}
 
 {% block content %}
 
@@ -98,25 +99,7 @@
                         <div class="col-md-6">
                             <h4>Test result</h4>
                             {% if test_id in test_results %}
-                                {% if test_results[test_id]|length == 0 %}
-                                    Perfect match.
-                                {% endif %}
-                                {% if test_results[test_id].extra_attributes|length > 0 %}
-                                    The following parameters should NOT be returned:
-                                    <ul>
-                                        {% for item in test_results[test_id].extra_attributes %}
-                                        <li>{{ item }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                    {% endif %}
-                                {% if test_results[test_id].missing_attributes|length > 0 %}
-                                    The following parameters should be returned:
-                                    <ul>
-                                        {% for item in test_results[test_id].missing_attributes %}
-                                        <li>{{ item }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                    {% endif %}
+                                {{ test_result.render(test_results[test_id]) }}
                             {% else %}
                                 No result exists.
                             {% endif %}
