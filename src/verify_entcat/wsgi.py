@@ -41,7 +41,7 @@ def run_test(test_id):
     if "request_cache" not in flask.session:
         flask.session["request_cache"] = RequestCache()
 
-    request_origin = geturl(flask.request.environ)
+    request_origin = flask.request.url
     redirect = DS(flask.session["request_cache"]).redirect_to_discovery_service(
         app.config['SP'][test_id], app.config['DISCOVERY_SERVICE'], request_origin)
 
