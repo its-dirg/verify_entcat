@@ -1,11 +1,9 @@
 import logging
 from urllib.parse import urlencode
-
 from saml2 import BINDING_HTTP_REDIRECT, BINDING_HTTP_POST
 from saml2.assertion import Policy
 from saml2.httputil import SeeOther
 from saml2.s_utils import sid
-
 from verify_entcat.ec_compare import EntityCategoryComparison
 
 logger = logging.getLogger(__name__)
@@ -81,10 +79,10 @@ class ACS(ServiceProviderRequestHandler):
         attribute_diff = self.entity_category_comparison(sp.config.entity_category,
                                                          saml_response.ava)
 
-        logger.info(">%s>%s> %s", saml_response.response.issuer.text, sp.config.entityid,
-                    attribute_diff)
+        idp_entity_id = saml_response.response.issuer.text
+        logger.info(">%s>%s> %s", idp_entity_id, sp.config.entityid, attribute_diff)
 
-        return attribute_diff
+        return idp_entity_id, attribute_diff
 
 
 class DS(ServiceProviderRequestHandler):

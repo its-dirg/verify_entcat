@@ -3,10 +3,11 @@ import os
 import flask
 import yaml
 from flask import Flask
+from flask.globals import g
 from flask.templating import render_template
-from saml2.httputil import geturl
 
 from verify_entcat.configure import build_test_list, create_service_providers
+from verify_entcat.result_db import ResultDB
 from verify_entcat.saml import SSO, ACS, DS, RequestCache, ATTRIBUTE_RELEASE_POLICY
 
 
@@ -26,8 +27,15 @@ app.config.update(dict(
                           ATTRIBUTE_RELEASE_POLICY),
     SP=create_service_providers(config["available_tests"], config["verify_entcat_conf"]),
     DISCOVERY_SERVICE=config["verify_entcat_conf"]["discovery_service"],
-    SECRET_KEY=config["verify_entcat_conf"]["secret_key"]
+    SECRET_KEY=config["verify_entcat_conf"]["secret_key"],
+    RESULT_DB=config["verify_entcat_conf"]["result_db"]
 ))
+
+
+def get_db():
+    if not hasattr(g, 'result_db'):
+        g.result_db = ResultDB()
+    return g.result_db
 
 
 @app.route("/")
@@ -64,14 +72,15 @@ def disco(test_id):
 def acs(test_id):
     authn_response = flask.request.form["SAMLResponse"]
 
-    test_result = ACS(flask.session["request_cache"]).parse_authn_response(
+    idp_entity_id, test_result = ACS(flask.session["request_cache"]).parse_authn_response(
         app.config['SP'][test_id], authn_response)
 
     if "test_results" not in flask.session:
         flask.session["test_results"] = {}
     flask.session["test_results"][test_id] = test_result.to_dict()
 
-    # TODO store/update result in database
+    db = get_db()
+    db[idp_entity_id] = test_result
 
     return render_template("test_list.html", tests=app.config["TESTS"],
                            test_results=flask.session["test_results"])

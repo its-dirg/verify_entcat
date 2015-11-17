@@ -151,7 +151,8 @@ class TestACS:
                                                    authn={"class_ref": PASSWORD})
         saml_response = base64.b64encode(str(authn_response).encode("utf-8"))
         self.sp.allow_unsolicited = True
-        test_result = self.acs.parse_authn_response(self.sp, saml_response)
+        idp_entity_id, test_result = self.acs.parse_authn_response(self.sp, saml_response)
+        assert idp_entity_id == "https://idp.example.com"
         assert test_result.missing_attributes == set(["edupersontargetedid"])
 
     def test_raises_exception_for_broken_response_xml_from_idp(self, idp_instance):
