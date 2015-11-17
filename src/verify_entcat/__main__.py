@@ -7,7 +7,7 @@ from verify_entcat.wsgi import app
 
 app.debug = True
 app.secret_key = "abcdef"
-app = DebuggedApplication(SharedDataMiddleware(app, {
+app.wsgi_app = DebuggedApplication(SharedDataMiddleware(app.wsgi_app, {
     '/static': ('verify_entcat', 'site/static')
 }))
 
