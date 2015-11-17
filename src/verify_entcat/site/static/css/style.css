@@ -37,7 +37,7 @@ p {
 }
 
 .border-below {
-    border-bottom: 1px solid rgba(200,200,200,1);
+    border-bottom: 1px solid rgba(200, 200, 200, 1);
 }
 
 .border-between {
@@ -82,6 +82,35 @@ p {
 
 .panel-heading:hover h3 {
     text-decoration: underline;
+}
+
+.results-table {
+    margin: 0px;
+    table-layout: fixed;
+}
+
+.results-table th, .results-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.results-table td {
+    text-align: center;
+}
+
+.results-table thead th:first-child {
+    width: 20%;
+}
+
+.results-table button {
+    width: 100%;
+}
+
+.ellipsis-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #accordion a {

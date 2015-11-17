@@ -103,3 +103,20 @@ def acs(test_id):
 
     return render_template("test_list.html", tests=app.config["TESTS"],
                            test_results=flask.session["test_results"])
+
+
+@app.route("/results_overview")
+def results_overview():
+    db = get_db()
+
+    results_overview = {}
+
+    for idp_entity_id in db:
+        if idp_entity_id not in results_overview:
+            results_overview[idp_entity_id] = {}
+
+        result_entry = db[idp_entity_id]
+        results_overview[idp_entity_id][result_entry.test_id] = result_entry
+
+    return render_template("results_overview.html", tests=app.config["TESTS"],
+                           results_overview=results_overview)
