@@ -8,7 +8,11 @@ setup(
     package_data={
         'verify_entcat': [
             'templates/*.html',
-            'site/static/*'
+            'site/static/css/*',
+            'site/static/js/*',
+            'site/static/bootstrap/css/*',
+            'site/static/bootstrap/fonts/*',
+            'site/static/bootstrap/js/*'
         ]
     },
     author='Roland Hedberg, Hans Hoerberg, Rebecka Gulliksson',
