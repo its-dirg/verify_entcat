@@ -25,5 +25,8 @@ setup(
         "Development Status :: 0.2 - Beta",
         "License :: OSI Approved :: Apache Software License",
         "Topic :: Software Development :: Libraries :: Python Modules"
-    ]
+    ],
+    entry_points={
+        'console_scripts': ['create_metadata=verify_entcat.configure:main']
+    }
 )
