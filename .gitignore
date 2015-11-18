@@ -1,121 +1,19 @@
+# Python files
 *.py[cod]
 
-# C extensions
-*.so
-
-# Packages
-*.egg
+# Build output
 *.egg-info
-dist
-build
-eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
-lib
-lib64
-
-# Installer logs
-pip-log.txt
+dist/
+build/
 
 # Unit test / coverage reports
 .coverage
-.tox
-nosetests.xml
+.tox/
 
-# Translations
-*.mo
+# PyCharm
+.idea/
 
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
-
-server_conf.py
-
-server_conf.py
-
-.idea/.name
-
-.idea/encodings.xml
-
-.idea/misc.xml
-
-.idea/modules.xml
-
-.idea/scopes/scope_settings.xml
-
-.idea/vcs.xml
-
-.idea/verify_entcat.iml
-
-.idea/workspace.xml
-
-conf_coc.py
-
-conf_nren.py
-
-conf_re_eu.py
-
-conf_re_hei.py
-
-conf_re_nren.py
-
-conf_re_nren_sfs.py
-
-conf_sfs.py
-
-create_key.sh
-
-modules/test.mako.py
-
-pki/mycert.pem
-
-pki/mykey.pem
-
-server.csr
-
-server.csr
-
-server.csr
-
-server.csr
-
-server.csr
-
-server.key
-
-server.key.org
-
-sp.xml
-
-spx.log
-
-swamid-2.0.xml
-
-swamid2.md
-
-xenosmilus.umdc.umu.se-8086-coc-sp.xml
-
-xenosmilus.umdc.umu.se-8086-nren-sp.xml
-
-xenosmilus.umdc.umu.se-8086-re_eu-sp.xml
-
-xenosmilus.umdc.umu.se-8086-re_hei-sp.xml
-
-xenosmilus.umdc.umu.se-8086-re_nren-sp.xml
-
-xenosmilus.umdc.umu.se-8086-re_nren_sfs-sp.xml
-
-xenosmilus.umdc.umu.se-8086-sfs-sp.xml
-
-xenosmilus.umdc.umu.se-8086-sp.xml
-
-server.key.org
-
-server.csr
-
-.gitignore
+# Project output
+*.xml
+*.db
+*.log
