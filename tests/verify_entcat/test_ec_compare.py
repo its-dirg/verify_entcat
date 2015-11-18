@@ -2,7 +2,7 @@ from collections import Counter
 
 import pytest
 from saml2.assertion import Policy
-from saml2.entity_category.edugain import COC
+from saml2.entity_category.edugain import COCO
 from saml2.entity_category.refeds import RESEARCH_AND_SCHOLARSHIP
 from saml2.entity_category.swamid import NREN, RESEARCH_AND_EDUCATION, EU, HEI, SFS_1993_1153
 
@@ -19,8 +19,9 @@ class TestEntityCategoryVerifier:
 
     @pytest.mark.parametrize("entity_categories,expected_attributes", [
         ([''], ['edupersontargetedid']),
-        ([COC], ['edupersontargetedid', 'displayname', 'edupersonscopedaffiliation',
-                 'edupersonprincipalname', 'schachomeorganization', 'mail']),
+        ([COCO], ['edupersontargetedid', 'edupersonprincipalname', 'edupersonscopedaffiliation',
+                  'edupersonaffiliation', 'mail', 'displayname', 'cn',
+                  'schachomeorganization', 'schachomeorganizationtype']),
         ([NREN], ['edupersontargetedid']),
         ([RESEARCH_AND_SCHOLARSHIP],
          ['edupersontargetedid', 'givenname', 'sn', 'displayname', 'edupersonscopedaffiliation',
@@ -48,11 +49,12 @@ class TestEntityCategoryVerifier:
         assert len(diff) == 0
         assert diff.status.value == EntityCategoryTestStatusEnum.ok
 
-    def test_missing_attributes_coc(self):
-        diff = self.entity_category_comparer([COC], {k: None for k in ['displayname',
-                                                                       'edupersonscopedaffiliation',
-                                                                       'edupersonprincipalname'
-                                                                       ]})
+    def test_missing_attributes_coco(self):
+        diff = self.entity_category_comparer([COCO], {k: None for k in ['edupersonprincipalname',
+                                                                        'edupersonscopedaffiliation',
+                                                                        'edupersonaffiliation',
+                                                                        'displayname', 'cn',
+                                                                        'schachomeorganizationtype']})
         assert Counter(diff.missing_attributes) == Counter(
             ['edupersontargetedid', 'schachomeorganization', 'mail'])
         assert diff.status.value == EntityCategoryTestStatusEnum.too_few
@@ -70,22 +72,25 @@ class TestEntityCategoryVerifier:
         assert diff.status.value == EntityCategoryTestStatusEnum.too_many
 
     def test_missing_and_extra_attributes_coc(self):
-        diff = self.entity_category_comparer([COC], {k: None for k in ['displayname',
-                                                                       'edupersonscopedaffiliation',
-                                                                       'edupersonprincipalname',
-                                                                       'sn', 'co', 'o'
-                                                                       ]})
+        diff = self.entity_category_comparer([COCO], {k: None for k in ['edupersonprincipalname',
+                                                                        'edupersonscopedaffiliation',
+                                                                        'edupersonaffiliation',
+                                                                        'displayname', 'cn',
+                                                                        'schachomeorganizationtype',
+                                                                        'sn', 'co', 'o']})
         assert Counter(diff.missing_attributes) == Counter(
             ['edupersontargetedid', 'schachomeorganization', 'mail'])
         assert Counter(diff.extra_attributes) == Counter(['sn', 'co', 'o'])
         assert diff.status.value == EntityCategoryTestStatusEnum.too_few_too_many
 
     def test_case_insensitive_compare_of_attribute_names(self):
-        diff = self.entity_category_comparer([COC], {k: None for k in
-                                                     ['EDUPERSONTARGETEDID', 'displayName',
-                                                      'eduPersonScopedAffiliation',
-                                                      'edupErsonPrinciPalnAme',
-                                                      'ScHaChoMEoRgAniZaTiOn', 'MAIL']})
+        diff = self.entity_category_comparer([COCO], {k: None for k in
+                                                      ['EDUPERSONTARGETEDID', 'displayName',
+                                                       'eduPersonScopedAffiliation',
+                                                       'edupErsonPrinciPalnAme',
+                                                       'ScHaChoMEoRgAniZaTiOn', 'MAIL',
+                                                       'schAchomeoRganizationtYpe',
+                                                       'eduPersonAffiliation', 'cn']})
 
         assert len(diff) == 0
         assert diff.status.value == EntityCategoryTestStatusEnum.ok
