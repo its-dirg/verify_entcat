@@ -1,0 +1,43 @@
+available_tests:
+  coc:
+    entity_category:
+      - http://www.geant.net/uri/dataprotection-code-of-conduct/v1
+    required_attributes: [edupersontargetedid, edupersonprincipalname, edupersonscopedaffiliation,
+                          mail, displayname, schachomeorganization]
+    short_name: CoC
+  r_and_s:
+    entity_category:
+      - http://refeds.org/category/research-and-scholarship
+    required_attributes: [edupersontargetedid, edupersonprincipalname, edupersonscopedaffiliation,
+                          mail, givenname, sn, displayname]
+    short_name: R&S
+
+test_text_descriptions:
+  http://www.geant.net/uri/dataprotection-code-of-conduct/v1:
+    title: "Code of Conduct"
+    text: >
+      The GEANT Data protection Code of Conduct (CoC) defines
+      an approach on European level to meet the requirements of
+      the EU data protection directive for releasing mostly
+      harmless personal attributes to a Service Provider (SP)
+      from an Identity Provider (IdP). For more information
+      please see GEANT Data Protection Code of Conduct.
+
+
+  http://refeds.org/category/research-and-scholarship:
+    title: "Research & Scholarship"
+    text: >
+      Candidates for the Research and Scholarship (R&S)
+      Category are Service Providers that support research
+      and scholarship interaction, collaboration or management
+      as an essential component.
+
+verify_entcat_conf:
+  base: "http://example.com"
+  sp_encryption_keys:
+    key_file: "sp.key"
+    cert_file: "sp.crt"
+  mdx: "http://mdx.example.com"
+  discovery_service: "http://example.com/role/idp.ds"
+  secret_key: "development key"
+  result_db: "result_db"
