@@ -1,5 +1,5 @@
 available_tests:
-  "":
+  basic:
     entity_category: []
     required_attributes: [edupersontargetedid]
     short_name: Base category
