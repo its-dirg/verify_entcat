@@ -1,4 +1,7 @@
 import os
+import random
+import string
+
 import flask
 import yaml
 from beaker.middleware import SessionMiddleware
@@ -19,6 +22,10 @@ class BeakerSessionInterface(SessionInterface):
     def save_session(self, app, session, response):
         session.save()
 
+def random_string(n=16):
+    return ''.join(
+        random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(n))
+
 
 def read_config():
     config_file = os.environ.get('VERIFY_ENTCAT_CONFIG', 'config.yml')
@@ -36,7 +43,7 @@ app.config.update(dict(
                           ATTRIBUTE_RELEASE_POLICY),
     SP=create_service_providers(config["available_tests"], config["verify_entcat_conf"]),
     DISCOVERY_SERVICE=config["verify_entcat_conf"]["discovery_service"],
-    SECRET_KEY=config["verify_entcat_conf"]["secret_key"],
+    SECRET_KEY=config["verify_entcat_conf"].get("secret_key", random_string()),
     RESULT_DB=config["verify_entcat_conf"]["result_db"]
 ))
 
