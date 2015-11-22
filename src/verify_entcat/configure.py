@@ -2,8 +2,6 @@
 
 import os
 from argparse import ArgumentParser
-
-import requests
 import yaml
 from saml2 import BINDING_HTTP_POST
 from saml2.client import Saml2Client
@@ -12,7 +10,6 @@ from saml2.extension.idpdisc import BINDING_DISCO
 from saml2.md import EntitiesDescriptor
 from saml2.mdstore import MetaDataMDX
 from saml2.metadata import entity_descriptor, metadata_tostring_fix
-
 from verify_entcat.ec_compare import get_expected_attributes
 
 
@@ -30,11 +27,6 @@ def build_test_list(configured_tests, text_descriptions, attribute_release_polic
     return tests
 
 
-class HTTPRequester:
-    def send(self, url, **kwargs):
-        return requests.get(url, **kwargs)
-
-
 METADATA_FILENAME_TEMPLATE = "{test_id}.xml"
 
 
@@ -45,7 +37,10 @@ def create_service_providers(configured_tests, verify_entcat_config):
                 "endpoints": None  # dynamically filled per SP test instance
             },
         },
-        "encryption_keypairs": [verify_entcat_config["sp_encryption_keys"]]
+        "encryption_keypairs": [verify_entcat_config["sp_encryption_keys"]],
+        "organization": {
+            "url": verify_entcat_config["base"],
+        }
     }
 
     mdx_interface = MetaDataMDX(verify_entcat_config["mdx"])
@@ -71,9 +66,16 @@ def create_service_providers(configured_tests, verify_entcat_config):
                  BINDING_DISCO)
             ]
         }
+        sp_config_dict["name"] = "verify_entcat for '{test_name}'".format(test_name=test_config["short_name"])
+        sp_config_dict["organization"].update({
+            "display_name": "verify_entcat for '{test_name}'".format(test_name=test_config["short_name"]),
+            "name": "verify_entcat for '{test_id}'".format(test_id=test_id),
+        })
 
         # merge test specific config
-        sp_config_dict["entity_category"] = test_config["entity_category"]
+        if "entity_category" in test_config and test_config["entity_category"]:
+            sp_config_dict["entity_category"] = test_config["entity_category"]
+
         sp_config_dict["service"]["sp"]["required_attributes"] = test_config.get(
             "required_attributes", [])
 
