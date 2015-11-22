@@ -1,5 +1,5 @@
 Flask==0.10.1
 gunicorn==19.3.0
 Beaker==1.7.0
-git+https://github.com/rohe/pysaml2@cff1391d73a4e81bf53ff11017b40bd016d82010#egg=pysaml2
+git+https://github.com/rohe/pysaml2@8036710642f7c27410ef994af0b0478a916c0f9e#egg=pysaml2
 git+https://github.com/its-dirg/saml-metadata-upload
